@@ -1,0 +1,79 @@
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../providers/user_provider.dart';
+import '../auth/login.dart';
+
+class SettingsScreen extends StatelessWidget {
+  void _logout(BuildContext context) async {
+    try {
+      await FirebaseAuth.instance.signOut();
+      Provider.of<UserProvider>(context, listen: false).clearUserData();
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (_) => LoginScreen()),
+        (route) => false,
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Ошибка выхода: ${e.toString()}"), backgroundColor: Colors.red),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Settings'),
+      ),
+      body: ListView(
+        children: [
+          ListTile(
+            leading: Icon(Icons.person, color: theme.primaryColor),
+            title: Text('Profile Settings', style: theme.textTheme.titleMedium),
+            onTap: () {},
+          ),
+          ListTile(
+            leading: Icon(Icons.notifications, color: theme.primaryColor),
+            title: Text('Notification Settings', style: theme.textTheme.titleMedium),
+            onTap: () {},
+          ),
+          ListTile(
+            leading: Icon(Icons.language, color: theme.primaryColor),
+            title: Text('Language', style: theme.textTheme.titleMedium),
+            onTap: () {},
+          ),
+          ListTile(
+            leading: Icon(Icons.payment, color: theme.primaryColor),
+            title: Text('Payment Methods', style: theme.textTheme.titleMedium),
+            onTap: () {},
+          ),
+          ListTile(
+            leading: Icon(Icons.security, color: theme.primaryColor),
+            title: Text('Privacy and Security', style: theme.textTheme.titleMedium),
+            onTap: () {},
+          ),
+          ListTile(
+            leading: Icon(Icons.help, color: theme.primaryColor),
+            title: Text('Help and Support', style: theme.textTheme.titleMedium),
+            onTap: () {},
+          ),
+          ListTile(
+            leading: Icon(Icons.info, color: theme.primaryColor),
+            title: Text('About', style: theme.textTheme.titleMedium),
+            onTap: () {},
+          ),
+          Divider(),
+          ListTile(
+            leading: Icon(Icons.exit_to_app, color: Colors.red),
+            title: Text('Logout', style: theme.textTheme.titleMedium?.copyWith(color: Colors.red)),
+            onTap: () => _logout(context),
+          ),
+        ],
+      ),
+    );
+  }
+}
