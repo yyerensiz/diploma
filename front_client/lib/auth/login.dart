@@ -29,6 +29,9 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<Map<String, dynamic>?> syncUserWithBackend(User user) async {
   try {
     final token = await user.getIdToken();
+
+    print("User Info: ${user.uid}, ${user.email}, ${user.displayName}, ${user.phoneNumber}");
+
     final response = await http.post(
       Uri.parse('http://10.0.2.2:5000/api/auth/sync'),
       headers: {
@@ -43,22 +46,29 @@ class _LoginScreenState extends State<LoginScreen> {
       }),
     );
 
-    if (response.statusCode == 200) {
-      final responseBody = jsonDecode(response.body);
+    print("Backend response: ${response.body}");
 
-      if (responseBody is Map<String, dynamic>) {
-        return responseBody; // ✅ Return the user data
-      } else {
-        debugPrint("Unexpected response format: $responseBody");
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      final responseBody = jsonDecode(response.body);
+      print("Sync response parsed: $responseBody");
+      print("Returned userData: ${responseBody.runtimeType}");
+
+      if (responseBody is List) {
+        print("Unexpected list received instead of a Map.");
+        return null;
       }
+
+      return responseBody;
     } else {
-      debugPrint("Failed to sync: ${response.statusCode} ${response.body}");
+      print("Failed to sync: ${response.statusCode} ${response.body}");
     }
   } catch (e) {
-    debugPrint("Sync error: $e");
+    print("Sync error: $e");
   }
-  return null; // Return null if there's an error
+
+  return null;
 }
+
 
 
   Future<void> _signIn() async {
@@ -101,6 +111,7 @@ class _LoginScreenState extends State<LoginScreen> {
   } finally {
     if (mounted) setState(() => _isLoading = false);
   }
+  
 }
 
 

@@ -19,10 +19,19 @@ router.post("/", verifyFirebaseToken, async (req, res) => {
     const { service_type, description, scheduled_for, children_ids } = req.body;
     const client_id = req.user.uid;
 
+    // Insert the order into the orders table (no children_ids yet)
     const result = await pool.query(
-      "INSERT INTO orders (service_type, description, status, client_id, scheduled_for, children_ids) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *",
-      [service_type, description, "pending", client_id, scheduled_for, children_ids]
+      "INSERT INTO orders (service_type, description, status, client_id, scheduled_for) VALUES ($1, $2, $3, $4, $5) RETURNING id",
+      [service_type, description, "pending", client_id, scheduled_for]
     );
+    
+    const orderId = result.rows[0].id;
+
+    // Insert each child into the order_children relationship table
+    if (children_ids && children_ids.length > 0) {
+      const values = children_ids.map(child_id => `(${orderId}, ${child_id})`).join(",");
+      await pool.query(`INSERT INTO order_children (order_id, child_id) VALUES ${values}`);
+    }
 
     res.status(201).json(result.rows[0]);
   } catch (error) {
@@ -30,6 +39,8 @@ router.post("/", verifyFirebaseToken, async (req, res) => {
     res.status(500).json({ error: "Failed to create order" });
   }
 });
+
+
 
 router.get("/my-orders", verifyFirebaseToken, async (req, res) => {
     const client_id = req.user.uid;

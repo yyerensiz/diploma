@@ -21,13 +21,15 @@ class AuthWrapper extends StatelessWidget {
         if (user == null) return LoginScreen();
 
         return Consumer<UserProvider>(
-          builder: (_, userProvider, __) {
-            if (userProvider.user == null) {
-              userProvider.setUser(user);
-            }
-            return MainScreen(); // Ensuring this is a constant widget if possible
-          },
-        );
+  builder: (context, userProvider, _) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!context.mounted) return;
+      userProvider.setUser(user);
+    });
+    return MainScreen();
+  },
+);
+
       },
     );
   }
