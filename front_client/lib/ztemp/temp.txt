@@ -1,0 +1,745 @@
+no, i'll keep firebase. Help me with changing synchronization logic from login part to registration part. And making it working, i'll send you codes of files i think needed, but if you need additional info and more details ask me.
+front_client\lib\auth\login.dart:
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
+import 'package:front_client/auth/signup.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:provider/provider.dart';
+import '../providers/user_provider.dart';
+import '../screens/navbar.dart';
+import 'forgot_password.dart';
+
+class LoginScreen extends StatefulWidget {
+  @override
+  _LoginScreenState createState() => _LoginScreenState();
+}
+
+class _LoginScreenState extends State<LoginScreen> {
+  final _formKey = GlobalKey<FormState>();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  bool _isLoading = false;
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  Future<Map<String, dynamic>?> syncUserWithBackend(User user) async {
+  try {
+    final token = await user.getIdToken();
+
+    print("User Info: ${user.uid}, ${user.email}, ${user.displayName}, ${user.phoneNumber}");
+
+    final response = await http.post(
+      Uri.parse('http://10.0.2.2:5000/api/auth/sync'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode({
+        'firebase_uid': user.uid,
+        'email': user.email,
+        'full_name': user.displayName ?? user.email?.split('@')[0] ?? "Unknown",
+        'phone': user.phoneNumber ?? "Not provided",
+      }),
+    );
+
+    print("Backend response: ${response.body}");
+
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      final responseBody = jsonDecode(response.body);
+      print("Sync response parsed: $responseBody");
+      print("Returned userData: ${responseBody.runtimeType}");
+
+      final userData = responseBody is List ? responseBody.first : responseBody;
+      print("✅ User synced: $userData");
+      return userData;
+
+    } else {
+      print("Failed to sync: ${response.statusCode} ${response.body}");
+    }
+  } catch (e) {
+    print("Sync error: $e");
+  }
+
+  return null;
+}
+
+
+
+  Future<void> _signIn() async {
+  if (!_formKey.currentState!.validate()) return;
+
+  setState(() => _isLoading = true);
+
+  try {
+    UserCredential userCredential = await FirebaseAuth.instance.signInWithEmailAndPassword(
+      email: _emailController.text.trim(),
+      password: _passwordController.text.trim(),
+    );
+
+    User? user = userCredential.user;
+    if (user != null) {
+      final userData = await syncUserWithBackend(user);
+
+      if (userData != null && mounted) {
+        Provider.of<UserProvider>(context, listen: false).setUserData(userData);
+        print("Navigating to MainScreen...");
+        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => MainScreen()));
+      } else {
+        debugPrint("Failed to retrieve user data from backend.");
+      }
+    }
+  } on FirebaseAuthException catch (e) {
+    String errorMessage = "Ошибка входа.";
+    if (e.code == 'user-not-found') {
+      errorMessage = "Пользователь не найден.";
+    } else if (e.code == 'wrong-password') {
+      errorMessage = "Неверный пароль.";
+    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(errorMessage), backgroundColor: Colors.red),
+    );
+  } catch (e) {
+    debugPrint("Login error: $e");
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text("Ошибка входа: ${e.toString()}"), backgroundColor: Colors.red),
+    );
+  } finally {
+    if (mounted) setState(() => _isLoading = false);
+  }
+  
+}
+
+
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  'CareNest',
+                  style: Theme.of(context).textTheme.headlineLarge?.copyWith(
+                        color: Theme.of(context).primaryColor,
+                        fontWeight: FontWeight.bold,
+                      ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Помощь родителям',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: Colors.grey[600],
+                      ),
+                ),
+                const SizedBox(height: 48),
+                Form(
+                  key: _formKey,
+                  child: Column(
+                    children: [
+                      TextFormField(
+                        controller: _emailController,
+                        keyboardType: TextInputType.emailAddress,
+                        decoration: const InputDecoration(
+                          labelText: 'Email',
+                          prefixIcon: Icon(Icons.email),
+                          border: OutlineInputBorder(),
+                        ),
+                        validator: (value) => (value?.isEmpty ?? true) ? 'Введите email' : null,
+                      ),
+                      const SizedBox(height: 16),
+                      TextFormField(
+                        controller: _passwordController,
+                        obscureText: true,
+                        decoration: const InputDecoration(
+                          labelText: 'Пароль',
+                          prefixIcon: Icon(Icons.lock),
+                          border: OutlineInputBorder(),
+                        ),
+                        validator: (value) => (value?.isEmpty ?? true) ? 'Введите пароль' : null,
+                      ),
+                      const SizedBox(height: 24),
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: _isLoading ? null : _signIn,
+                          child: Padding(
+                            padding: const EdgeInsets.all(16),
+                            child: _isLoading
+                                ? const SizedBox(
+                                    height: 20,
+                                    width: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: Colors.white,
+                                    ),
+                                  )
+                                : const Text(
+                                    'Войти',
+                                    style: TextStyle(fontSize: 16),
+                                  ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+                TextButton(
+                  onPressed: () {
+                    Navigator.push(context, MaterialPageRoute(builder: (_) => SignupScreen()));
+                  }, 
+                  child: const Text('Создать аккаунт'),
+                ),
+
+                TextButton(
+                  onPressed: () {
+                    Navigator.push(context, MaterialPageRoute(builder: (_) => ForgotPasswordScreen()));
+                  },
+                  child: const Text('Забыли пароль?'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+front_client\lib\auth\signup.dart:
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'login.dart';
+
+class SignupScreen extends StatefulWidget {
+  @override
+  _SignupScreenState createState() => _SignupScreenState();
+}
+
+class _SignupScreenState extends State<SignupScreen> {
+  final _formKey = GlobalKey<FormState>();
+  final TextEditingController emailController = TextEditingController();
+  final TextEditingController passwordController = TextEditingController();
+  final TextEditingController fullNameController = TextEditingController();
+  final TextEditingController phoneController = TextEditingController();
+  bool _isLoading = false;
+
+  @override
+  void dispose() {
+    emailController.dispose();
+    passwordController.dispose();
+    fullNameController.dispose();
+    phoneController.dispose();
+    super.dispose();
+  }
+
+  Future<void> signUp(BuildContext context) async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() => _isLoading = true);
+
+    try {
+      UserCredential userCredential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
+        email: emailController.text.trim(),
+        password: passwordController.text.trim(),
+      );
+
+      User? user = userCredential.user;
+      if (user != null) {
+        final response = await http.post(
+          Uri.parse('http://10.0.2.2:5000/api/auth/register'),
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({
+            'firebase_uid': user.uid,
+            'email': user.email,
+            'full_name': fullNameController.text.trim(),
+            'phone': phoneController.text.trim(),
+            'role': 'client',
+          }),
+        );
+
+        if (response.statusCode == 200 || response.statusCode == 201) {
+          if (mounted) {
+            Navigator.popUntil(context, (route) => route.isFirst);
+            Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => LoginScreen()));
+          }
+        } else {
+          final errorMessage = jsonDecode(response.body)['error'] ?? 'Ошибка регистрации';
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(errorMessage), backgroundColor: Colors.red),
+          );
+        }
+      }
+    } on FirebaseAuthException catch (e) {
+      String errorMessage = "Ошибка регистрации.";
+      if (e.code == 'email-already-in-use') {
+        errorMessage = "Этот email уже используется.";
+      } else if (e.code == 'weak-password') {
+        errorMessage = "Пароль слишком слабый.";
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(errorMessage), backgroundColor: Colors.red),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Ошибка: $e"), backgroundColor: Colors.red),
+      );
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Регистрация')),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            children: [
+              TextFormField(
+                controller: fullNameController,
+                decoration: const InputDecoration(labelText: 'Имя'),
+                validator: (value) => (value?.isEmpty ?? true) ? 'Введите имя' : null,
+              ),
+              TextFormField(
+                controller: phoneController,
+                keyboardType: TextInputType.phone,
+                decoration: const InputDecoration(labelText: 'Телефон'),
+                validator: (value) => (value?.isEmpty ?? true) ? 'Введите номер телефона' : null,
+              ),
+              TextFormField(
+                controller: emailController,
+                keyboardType: TextInputType.emailAddress,
+                decoration: const InputDecoration(labelText: 'Email'),
+                validator: (value) => (value?.isEmpty ?? true) ? 'Введите email' : null,
+              ),
+              TextFormField(
+                controller: passwordController,
+                decoration: const InputDecoration(labelText: 'Пароль'),
+                obscureText: true,
+                validator: (value) => (value != null && value.length < 6) ? 'Минимум 6 символов' : null,
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: _isLoading ? null : () => signUp(context),
+                  child: _isLoading
+                      ? const CircularProgressIndicator(color: Colors.white)
+                      : const Text('Зарегистрироваться'),
+                ),
+              ),
+              TextButton(
+                onPressed: () {
+                  Navigator.popUntil(context, (route) => route.isFirst);
+                  Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => LoginScreen()));
+                },
+                child: const Text('Уже есть аккаунт? Войти'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+front_client\lib\auth\auth_wrapper.dart:
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../providers/user_provider.dart';
+import '../screens/navbar.dart';
+import 'login.dart';
+
+class AuthWrapper extends StatelessWidget {
+  const AuthWrapper({super.key}); // Added key parameter
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<User?>(
+      stream: FirebaseAuth.instance.authStateChanges(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const LoadingScreen();
+        }
+
+        final user = snapshot.data;
+        if (user == null) return LoginScreen();
+
+        return Consumer<UserProvider>(
+  builder: (context, userProvider, _) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!context.mounted) return;
+      userProvider.setUser(user);
+    });
+    return MainScreen();
+  },
+);
+
+      },
+    );
+  }
+}
+
+class LoadingScreen extends StatelessWidget {
+  const LoadingScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const Scaffold(
+      body: SafeArea(
+        child: Center(child: CircularProgressIndicator()),
+      ),
+    );
+  }
+}
+
+front_client\lib\providers\user_provider.dart:
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
+import 'package:google_sign_in/google_sign_in.dart';
+
+class UserProvider extends ChangeNotifier {
+  User? _user;
+  bool _isLoading = false;
+  Map<String, dynamic>? _userData;
+
+  User? get user => _user;
+  bool get isLoading => _isLoading;
+  bool get isAuthenticated => _user != null;
+  Map<String, dynamic>? get userData => _userData;
+
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final GoogleSignIn _googleSignIn = GoogleSignIn();
+
+  UserProvider() {
+    _auth.authStateChanges().listen((User? user) {
+      _user = user;
+      notifyListeners();
+    });
+  }
+
+  void setUser(User user) {
+    _user = user;
+    notifyListeners();
+  }
+
+  void setUserData(Map<String, dynamic> data) {
+    _userData = data;
+    notifyListeners();
+  }
+  
+  void clearUserData() {
+  _user = null; // Assuming _user holds user data
+  notifyListeners();
+}
+
+
+  Future<void> signIn(String email, String password) async {
+    try {
+      _isLoading = true;
+      notifyListeners();
+
+      UserCredential credential = await _auth.signInWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+
+      _user = credential.user; // Update user
+    } on FirebaseAuthException catch (e) {
+      debugPrint('Sign In Error: ${e.message}');
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> signUp(String email, String password) async {
+    try {
+      _isLoading = true;
+      notifyListeners();
+
+      UserCredential credential = await _auth.createUserWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+
+      _user = credential.user; // Update user
+    } on FirebaseAuthException catch (e) {
+      debugPrint('Sign Up Error: ${e.message}');
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> signInWithGoogle() async {
+    try {
+      _isLoading = true;
+      notifyListeners();
+
+      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+      if (googleUser == null) {
+        _isLoading = false;
+        notifyListeners();
+        return;
+      }
+
+      final GoogleSignInAuthentication googleAuth =
+          await googleUser.authentication;
+
+      final credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+
+      UserCredential userCredential = await _auth.signInWithCredential(credential);
+      _user = userCredential.user; // Update user
+    } on FirebaseAuthException catch (e) {
+      debugPrint('Google Sign In Error: ${e.message}');
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> signOut() async {
+    try {
+      _isLoading = true;
+      notifyListeners();
+
+      await _auth.signOut();
+      await _googleSignIn.signOut();
+      
+      _user = null; // Clear user
+    } on FirebaseAuthException catch (e) {
+      debugPrint('Sign Out Error: ${e.message}');
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> resetPassword(String email) async {
+    try {
+      _isLoading = true;
+      notifyListeners();
+
+      await _auth.sendPasswordResetEmail(email: email);
+    } on FirebaseAuthException catch (e) {
+      debugPrint('Reset Password Error: ${e.message}');
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> updateProfile({String? displayName, String? photoURL}) async {
+    try {
+      _isLoading = true;
+      notifyListeners();
+
+      if (_user != null) {
+        await _user!.updateDisplayName(displayName);
+        await _user!.updatePhotoURL(photoURL);
+        await _auth.currentUser?.reload(); // Ensure updated data
+
+        _user = _auth.currentUser; // Refresh user
+      }
+    } on FirebaseAuthException catch (e) {
+      debugPrint('Update Profile Error: ${e.message}');
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+}
+
+backend\src\controllers\userController.js:
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
+const pool = require("../database/db");
+
+exports.registerUser = async (req, res) => {
+    const { name, email, password } = req.body;
+
+    try {
+        const hashedPassword = await bcrypt.hash(password, 10);
+        const result = await pool.query(
+            "INSERT INTO users (name, email, password) VALUES ($1, $2, $3) RETURNING id, name, email",
+            [name, email, hashedPassword]
+        );
+
+        res.status(201).json(result.rows[0]);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+exports.loginUser = async (req, res) => {
+    const { email, password } = req.body;
+
+    try {
+        const user = await pool.query("SELECT * FROM users WHERE email = $1", [email]);
+        if (user.rows.length === 0) return res.status(401).json({ message: "Invalid credentials" });
+
+        const isValid = await bcrypt.compare(password, user.rows[0].password);
+        if (!isValid) return res.status(401).json({ message: "Invalid credentials" });
+
+        const token = jwt.sign({ id: user.rows[0].id }, process.env.JWT_SECRET, { expiresIn: "1d" });
+        // const token = jwt.sign({ id: user.rows[0].id }, process.env.JWT_SECRET, { 
+        //     expiresIn: "1d", 
+        //     algorithm: "HS256"
+        // });
+        
+
+        res.json({ token, user: { id: user.rows[0].id, name: user.rows[0].name, email: user.rows[0].email } });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+backend\src\middlewares\authMiddleware.js:
+const admin = require("../firebase"); 
+
+const verifyFirebaseToken = async (req, res, next) => {
+    const token = req.headers.authorization?.split("Bearer ")[1];
+
+    if (!token) {
+        return res.status(401).json({ error: "Unauthorized: No token provided" });
+    }
+
+    try {
+        const decodedToken = await admin.auth().verifyIdToken(token);
+        req.user = decodedToken; 
+        console.log("Decoded Firebase Token:", decodedToken);
+        next();
+    } catch (error) {
+        console.error("Firebase Auth Error:", error.message);
+        return res.status(403).json({ error: "Unauthorized: Invalid token" });
+    }
+};
+
+module.exports = verifyFirebaseToken;
+
+backend\src\routes\auth.js:
+const express = require("express");
+const router = express.Router();
+const pool = require("../database/db");
+
+router.post("/sync", async (req, res) => {
+  const { firebase_uid, email, full_name, phone } = req.body;
+
+  try {
+      const userExists = await pool.query(
+          "SELECT * FROM users WHERE firebase_uid = $1",
+          [firebase_uid]
+      );
+
+      if (userExists.rows.length === 0) {
+        const newUser = await pool.query(
+            "INSERT INTO users (firebase_uid, email, full_name, phone, role) VALUES ($1, $2, $3, $4, 'client') RETURNING *",
+            [firebase_uid, email, full_name, phone]
+        );
+        console.log("✅ New user created:", newUser.rows[0]);
+        return res.status(201).json(newUser.rows[0]); // ✅ already correct here
+    } else {
+        console.log("✅ User already exists:", userExists.rows[0]);
+        return res.status(200).json(userExists.rows[0]); // ✅ FIXED HERE
+    }
+    
+  } catch (error) {
+      console.error("❌ Error syncing user:", error);
+      res.status(500).json({ error: "Failed to sync user" });
+  }
+  console.log("Received Firebase User Data:", userRecord);
+
+});
+
+router.get("/sync", (req, res) => {
+  res.status(200).json({ message: "Auth Sync API is working!" });
+});
+
+module.exports = router;
+
+backend\src\routes\userRoutes.js:
+const express = require('express');
+const { registerUser, loginUser } = require('../controllers/userController');
+const router = express.Router();
+
+router.post('/signup', registerUser);
+router.post('/login', loginUser);
+
+module.exports = router;
+
+backend\src\routes\users.js:
+const express = require("express");
+const router = express.Router();
+const bcrypt = require("bcryptjs");
+const { Pool } = require("pg");
+
+const pool = new Pool({
+  user: process.env.DB_USER,
+  host: process.env.DB_HOST,
+  database: process.env.DB_NAME,
+  password: process.env.DB_PASSWORD,
+  port: process.env.DB_PORT,
+});
+
+router.post("/register", async (req, res) => {
+  const { email, password } = req.body;
+
+  try {
+    console.log("Received request to register:", email);
+
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    console.log("Password hashed successfully"); 
+
+    const result = await pool.query(
+      "INSERT INTO users (email, password) VALUES ($1, $2) RETURNING *",
+      [email, hashedPassword]
+    );
+
+    console.log("User saved in database:", result.rows[0]); 
+
+    res.status(201).json({ message: "User registered", user: result.rows[0] });
+  } catch (error) {
+    console.error("Register error:", error); 
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+module.exports = router;
+
+backend\src\firebase.js:
+const admin = require("firebase-admin");
+//const serviceAccount = require("../firebase-admin-key.json"); 
+const serviceAccount = JSON.parse(process.env.FIREBASE_CREDENTIALS);
+
+
+if (!admin.apps.length) {
+  admin.initializeApp({
+      credential: admin.credential.cert(serviceAccount)
+  });
+  console.log("Firebase Admin Initialized");
+}
+
+module.exports = admin;

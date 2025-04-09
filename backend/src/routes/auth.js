@@ -3,7 +3,7 @@ const router = express.Router();
 const pool = require("../database/db");
 
 router.post("/sync", async (req, res) => {
-  const { firebase_uid, email, full_name, phone } = req.body;
+  const { firebase_uid, email, full_name, phone, fcm_token, role } = req.body;
 
   try {
       const userExists = await pool.query(
@@ -13,8 +13,8 @@ router.post("/sync", async (req, res) => {
 
       if (userExists.rows.length === 0) {
         const newUser = await pool.query(
-            "INSERT INTO users (firebase_uid, email, full_name, phone, role) VALUES ($1, $2, $3, $4, 'client') RETURNING *",
-            [firebase_uid, email, full_name, phone]
+            "INSERT INTO users (firebase_uid, email, full_name, phone, fcm_token, role) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *",
+            [firebase_uid, email, full_name, phone, fcm_token, role]
         );
         console.log("✅ New user created:", newUser.rows[0]);
         return res.status(201).json(newUser.rows[0]); // ✅ already correct here
