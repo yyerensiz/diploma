@@ -4,21 +4,25 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
 import '../providers/children_provider.dart';
 import 'dart:convert';
+import 'page_search_specialist.dart';
 
 class ServiceDetailsPage extends StatefulWidget {
   final String serviceName;
+  
 
   const ServiceDetailsPage({required this.serviceName});
 
   @override
   _ServiceDetailsPageState createState() => _ServiceDetailsPageState();
+  
 }
 
 class _ServiceDetailsPageState extends State<ServiceDetailsPage> {
+  Specialist? selectedSpecialist;
   DateTime? selectedDate;
   TimeOfDay? selectedTime;
   List<String> selectedChildren = [];
-  final TextEditingController descriptionController = TextEditingController();
+  TextEditingController descriptionController = TextEditingController();
   bool _isLoading = false;
 
   Future<void> createOrder() async {
@@ -50,7 +54,7 @@ class _ServiceDetailsPageState extends State<ServiceDetailsPage> {
 
       final token = await user.getIdToken();
       final response = await http.post(
-        Uri.parse('http://10.0.2.2:5000/api/orders'),
+        Uri.parse('http://192.168.0.230:5000/api/orders'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',
@@ -61,6 +65,7 @@ class _ServiceDetailsPageState extends State<ServiceDetailsPage> {
           'status': 'pending',
           'scheduled_for': orderDateTime.toIso8601String(),
           'children_ids': selectedChildren,
+          'specialist_id': selectedSpecialist?.id,
         }),
       );
 
@@ -182,25 +187,43 @@ class _ServiceDetailsPageState extends State<ServiceDetailsPage> {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: _isLoading ? null : createOrder,
-                child: Padding(
-                  padding: EdgeInsets.all(16),
-                  child: _isLoading
-                      ? SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.white,
-                          ),
-                        )
-                      : Text(
-                          'Create Order',
-                          style: TextStyle(fontSize: 18),
-                        ),
+                onPressed: () async {
+                  if (selectedDate == null || selectedTime == null || selectedChildren.isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Please fill date, time, and select at least one child')),
+                    );
+                    return;
+                  }
+
+                  final result = await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => SpecialistSelectionPage(
+                        selectedDate: selectedDate!,
+                        selectedTime: selectedTime!,
+                        selectedChildren: selectedChildren,
+                        description: descriptionController.text,
+                        serviceType: widget.serviceName,
+                      ),
+
+                    ),
+                  );
+
+
+                  if (result is Specialist) {
+                    setState(() {
+                      selectedSpecialist = result;
+                    });
+                  }
+                },
+                child: Text(
+                  selectedSpecialist != null
+                      ? selectedSpecialist!.name
+                      : 'Select Specialist',
                 ),
               ),
             ),
+
           ],
         ),
       ),

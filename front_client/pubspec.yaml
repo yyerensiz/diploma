@@ -1,5 +1,5 @@
 name: front_client
-description: "A new Flutter project."
+description: "CareNest - Client application"
 
 publish_to: 'none' 
 
@@ -24,6 +24,8 @@ dependencies:
   cupertino_icons: ^1.0.2
   flutter_launcher_icons: ^0.14.3
   firebase_messaging: ^15.2.5
+  flutter_localizations:
+    sdk: flutter
 
 dev_dependencies:
   flutter_test:

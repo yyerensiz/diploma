@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'page_children_add.dart'; // Import the newly created page for adding children
 
 class ProfilePage extends StatelessWidget {
   @override
@@ -40,6 +41,15 @@ class ProfilePage extends StatelessWidget {
                         // Навигация к странице редактирования профиля
                       },
                       child: Text('Редактировать'),
+                    ),
+                    ElevatedButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => PageChildrenAdd()),
+                        );
+                      },
+                      child: Text('Добавить ребенка'),
                     ),
                   ],
                 ),

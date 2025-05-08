@@ -1,0 +1,68 @@
+{
+    "project_info": {
+      "project_number": "286473724516",
+      "project_id": "carenest-1519f",
+      "storage_bucket": "carenest-1519f.firebasestorage.app"
+    },
+    "client": [
+      {
+        "client_info": {
+          "mobilesdk_app_id": "1:286473724516:android:a23780b3ddb9fdd8743571",
+          "android_client_info": {
+            "package_name": "com.android.application"
+          }
+        },
+        "oauth_client": [
+          {
+            "client_id": "286473724516-l5j04kvdlh3ua5m1ud6ti6val5fq23cj.apps.googleusercontent.com",
+            "client_type": 3
+          }
+        ],
+        "api_key": [
+          {
+            "current_key": "AIzaSyCdVTr91OL_DEoM2jELNyynM0nQVpS-Wf4"
+          }
+        ],
+        "services": {
+          "appinvite_service": {
+            "other_platform_oauth_client": [
+              {
+                "client_id": "286473724516-l5j04kvdlh3ua5m1ud6ti6val5fq23cj.apps.googleusercontent.com",
+                "client_type": 3
+              }
+            ]
+          }
+        }
+      },
+      {
+        "client_info": {
+          "mobilesdk_app_id": "1:286473724516:android:2790fb4b6d2de207743571",
+          "android_client_info": {
+            "package_name": "com.example.carenest"
+          }
+        },
+        "oauth_client": [
+          {
+            "client_id": "286473724516-l5j04kvdlh3ua5m1ud6ti6val5fq23cj.apps.googleusercontent.com",
+            "client_type": 3
+          }
+        ],
+        "api_key": [
+          {
+            "current_key": "AIzaSyCdVTr91OL_DEoM2jELNyynM0nQVpS-Wf4"
+          }
+        ],
+        "services": {
+          "appinvite_service": {
+            "other_platform_oauth_client": [
+              {
+                "client_id": "286473724516-l5j04kvdlh3ua5m1ud6ti6val5fq23cj.apps.googleusercontent.com",
+                "client_type": 3
+              }
+            ]
+          }
+        }
+      }
+    ],
+    "configuration_version": "1"
+  }

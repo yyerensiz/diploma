@@ -1,19 +1,85 @@
 import 'package:flutter/material.dart';
+import 'package:front_client/screens/page_search_specialist.dart';
 
-class SpecialistProfilePage extends StatelessWidget {
-  final String name;
-  final String specialization;
-  final double rating;
-  final String imageUrl;
-  final String description;
+import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:provider/provider.dart';
+import '../providers/children_provider.dart';
+import 'dart:convert';
+import 'page_search_specialist.dart';
+class SpecialistProfilePage extends StatefulWidget {
+  final Specialist specialist;
+  final bool isOrderFlow;
+  final DateTime? selectedDate;
+  final TimeOfDay? selectedTime;
+  final List<String>? selectedChildren;
+  final String? orderDescription;
+  final String? serviceType;
+
 
   const SpecialistProfilePage({
-    required this.name,
-    required this.specialization,
-    required this.rating,
-    required this.imageUrl,
-    required this.description,
+    required this.specialist,
+    this.isOrderFlow = false,
+    this.selectedDate,
+    this.selectedTime,
+    this.selectedChildren,
+    this.orderDescription,
+    this.serviceType,
   });
+
+  @override
+  State<SpecialistProfilePage> createState() => _SpecialistProfilePageState();
+}
+
+class _SpecialistProfilePageState extends State<SpecialistProfilePage> {
+  Future<bool> createOrder() async {
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) return false;
+
+      final token = await user.getIdToken();
+      final scheduledDateTime = DateTime(
+        widget.selectedDate!.year,
+        widget.selectedDate!.month,
+        widget.selectedDate!.day,
+        widget.selectedTime!.hour,
+        widget.selectedTime!.minute,
+      );
+      final requestBody = {
+        'specialist_id': widget.specialist.id,
+        'description': widget.orderDescription,
+        'status': 'pending',
+        'scheduled_for': scheduledDateTime.toIso8601String(),
+        'children_ids': widget.selectedChildren,
+        if (widget.serviceType != null) 'service_type': widget.serviceType,
+      };
+
+      print('Sending order: ${jsonEncode(requestBody)}'); // ✅ Log the payload
+
+      final response = await http.post(
+        Uri.parse('http://192.168.0.230:5000/api/orders'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({
+          'specialist_id': widget.specialist.id,
+          'description': widget.orderDescription,
+          'status': 'pending',
+          'scheduled_for': scheduledDateTime.toIso8601String(),
+          'children_ids': widget.selectedChildren,
+          if (widget.serviceType != null) 'service_type': widget.serviceType,
+        }),
+      );
+      
+
+      return response.statusCode == 201;
+    } catch (e) {
+      print('Error creating order: $e');
+      return false;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -23,9 +89,7 @@ class SpecialistProfilePage extends StatelessWidget {
         actions: [
           IconButton(
             icon: Icon(Icons.chat),
-            onPressed: () {
-              // Навигация к чату со специалистом
-            },
+            onPressed: () {},
           ),
         ],
       ),
@@ -41,29 +105,17 @@ class SpecialistProfilePage extends StatelessWidget {
                 children: [
                   CircleAvatar(
                     radius: 60,
-                    backgroundImage: NetworkImage(imageUrl),
+                    backgroundImage: NetworkImage(widget.specialist.imageUrl),
                   ),
                   SizedBox(height: 16),
-                  Text(
-                    name,
-                    style: Theme.of(context).textTheme.headlineSmall,
-                  ),
-                  Text(
-                    specialization,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          color: Colors.grey[600],
-                        ),
-                  ),
+                  Text(widget.specialist.name, style: Theme.of(context).textTheme.headlineSmall),
                   SizedBox(height: 8),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Icon(Icons.star, color: Colors.amber),
                       SizedBox(width: 4),
-                      Text(
-                        rating.toString(),
-                        style: Theme.of(context).textTheme.titleMedium,
-                      ),
+                      Text(widget.specialist.rating.toString(), style: Theme.of(context).textTheme.titleMedium),
                     ],
                   ),
                 ],
@@ -74,17 +126,11 @@ class SpecialistProfilePage extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'О специалисте',
-                    style: Theme.of(context).textTheme.titleLarge,
-                  ),
+                  Text('О специалисте', style: Theme.of(context).textTheme.titleLarge),
                   SizedBox(height: 8),
-                  Text(description),
+                  Text(widget.specialist.description),
                   SizedBox(height: 24),
-                  Text(
-                    'Отзывы',
-                    style: Theme.of(context).textTheme.titleLarge,
-                  ),
+                  Text('Отзывы', style: Theme.of(context).textTheme.titleLarge),
                   SizedBox(height: 8),
                   ListView.builder(
                     shrinkWrap: true,
@@ -109,15 +155,27 @@ class SpecialistProfilePage extends StatelessWidget {
         child: Padding(
           padding: EdgeInsets.all(16),
           child: ElevatedButton(
-            onPressed: () {
-              // Навигация к странице создания заказа
-            },
+            onPressed: widget.isOrderFlow
+                ? () async {
+                    final success = await createOrder();
+
+                    if (!mounted) return;
+
+                    if (success) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Заказ успешно создан')),
+                      );
+                      Navigator.popUntil(context, (route) => route.isFirst);
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Ошибка при создании заказа')),
+                      );
+                    }
+                  }
+                : null,
             child: Padding(
               padding: EdgeInsets.all(16),
-              child: Text(
-                'Заказать услугу',
-                style: TextStyle(fontSize: 18),
-              ),
+              child: Text('Заказать услугу', style: TextStyle(fontSize: 18)),
             ),
           ),
         ),
@@ -125,6 +183,7 @@ class SpecialistProfilePage extends StatelessWidget {
     );
   }
 }
+
 
 class ReviewCard extends StatelessWidget {
   final String authorName;
@@ -176,4 +235,4 @@ class ReviewCard extends StatelessWidget {
       ),
     );
   }
-} 
+}

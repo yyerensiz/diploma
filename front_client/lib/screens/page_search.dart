@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
 import 'page_service_order.dart';
 import 'page_specialist_profile.dart';
+import 'page_search_specialist.dart'; // for Specialist model
 
 class SearchPage extends StatelessWidget {
+  final List<Specialist> specialists;
+
+  const SearchPage({required this.specialists});
+
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
@@ -85,23 +90,20 @@ class SearchPage extends StatelessWidget {
           ListView.builder(
             shrinkWrap: true,
             physics: NeverScrollableScrollPhysics(),
-            itemCount: 5,
+            itemCount: specialists.length,
             itemBuilder: (context, index) {
+              final specialist = specialists[index];
               return SpecialistCard(
-                name: 'Anna M.',
-                rating: 4.5,
-                specialization: 'Babysitter',
-                imageUrl: 'https://example.com/avatar.jpg',
+                name: specialist.name,
+                rating: specialist.rating,
+                imageUrl: specialist.imageUrl,
                 onTap: () {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
                       builder: (context) => SpecialistProfilePage(
-                        name: 'Anna M.',
-                        specialization: 'Babysitter',
-                        rating: 4.5,
-                        imageUrl: 'https://example.com/avatar.jpg',
-                        description: 'Experienced babysitter with a passion for childcare.',
+                        specialist: specialist,
+                        isOrderFlow: true,
                       ),
                     ),
                   );
@@ -163,14 +165,12 @@ class ServiceCard extends StatelessWidget {
 class SpecialistCard extends StatelessWidget {
   final String name;
   final double rating;
-  final String specialization;
   final String imageUrl;
   final VoidCallback onTap;
 
   const SpecialistCard({
     required this.name,
     required this.rating,
-    required this.specialization,
     required this.imageUrl,
     required this.onTap,
   });
@@ -198,7 +198,7 @@ class SpecialistCard extends StatelessWidget {
                       name,
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
-                    Text(specialization),
+                    // Removed specialization as it's no longer part of the backend
                     Row(
                       children: [
                         Icon(Icons.star, size: 16, color: Colors.amber),

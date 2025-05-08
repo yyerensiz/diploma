@@ -14,7 +14,7 @@ class _MainScreenState extends State<MainScreen> {
   int _selectedIndex = 1; // Начинаем с домашней страницы
 
   final List<Widget> _pages = [
-    SearchPage(),
+    SearchPage(specialists: [],),
     HomePage(),
     ProfilePage(),
   ];
