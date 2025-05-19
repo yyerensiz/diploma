@@ -1,16 +1,26 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'providers/user_provider.dart';
+import 'package:shared_carenest/providers/user_provider.dart';
 import 'auth/auth_wrapper.dart';
 import 'firebase_options.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-
+import 'providers/provider_specialist.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(const AppEntry());
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => SpecialistProvider()),
+        ChangeNotifierProvider(create: (_) => UserProvider()),
+        // ... any other providers
+      ],
+      child: AppEntry(),
+    ),
+  );
 }
+
 
 class AppEntry extends StatelessWidget {
   const AppEntry({super.key});
@@ -69,12 +79,8 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (_) => UserProvider()),
-      ],
-      child: MaterialApp(
-        title: 'CareNest Job',
+    return MaterialApp(
+      title: 'CareNest Job',
         theme: ThemeData(
           primarySwatch: customPrimary,
           scaffoldBackgroundColor: backgroundColor,
@@ -110,17 +116,16 @@ class MyApp extends StatelessWidget {
             ),
           ),
         ),
-        home: AuthWrapper(),
+        home: SpecialistAuthWrapper(),
         supportedLocales: const [
-          Locale('en', ''), // English
-          Locale('ru', ''), // Russian — or add more if needed
+          Locale('en', ''),
+          Locale('ru', ''),
         ],
         localizationsDelegates: const [
           GlobalMaterialLocalizations.delegate,
           GlobalWidgetsLocalizations.delegate,
           GlobalCupertinoLocalizations.delegate,
         ],
-      ),
     );
   }
 }

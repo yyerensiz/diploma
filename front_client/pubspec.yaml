@@ -11,6 +11,9 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+    
+  shared_carenest:
+    path: ../shared_package
   provider: ^6.1.1
   http: ^1.1.0
   shared_preferences: ^2.5.2
@@ -38,7 +41,7 @@ flutter:
   uses-material-design: true
   assets:
     - assets/images/icon.jpg
-    - assets\images\icon.jpg
+    - assets/default_pfp.png
     - assets/images/
 
 flutter_icons:

@@ -1,7 +1,7 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'providers/user_provider.dart';
+import 'package:shared_carenest/providers/user_provider.dart';
 import 'providers/children_provider.dart';
 import 'auth/auth_wrapper.dart';
 import 'firebase_options.dart';
@@ -112,7 +112,7 @@ class MyApp extends StatelessWidget {
             ),
           ),
         ),
-        home: AuthWrapper(),
+        home: ClientAuthWrapper(),
         supportedLocales: const [
           Locale('en', ''), // English
           Locale('ru', ''), // Russian — or add more if needed
