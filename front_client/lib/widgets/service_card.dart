@@ -1,5 +1,4 @@
-// #region Helper Widgets
-// Service Card Widget
+//front_client\lib\widgets\service_card.dart
 import 'package:flutter/material.dart';
 
 class ServiceCard extends StatelessWidget {

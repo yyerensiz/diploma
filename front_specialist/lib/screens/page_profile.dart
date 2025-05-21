@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
-
+import 'page_payments.dart';
 import '../models/model_specialist.dart';
 import '../providers/provider_specialist.dart';
 
@@ -204,8 +204,13 @@ class _SpecialistProfilePageState extends State<SpecialistProfilePage> {
                 ],
               ),
               SizedBox(height: 32),
-              ProfileMenuButton(icon: Icons.description, title: 'Документы', onTap: () {}),
-              ProfileMenuButton(icon: Icons.history,     title: 'История заказов', onTap: () {}),
+              ProfileMenuButton(icon: Icons.history, title: 'История заказов', onTap: () {}),
+              ProfileMenuButton(icon: Icons.payment,     title: 'Платежные данные', onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => PaymentPage()),
+                );
+              },),
               ProfileMenuButton(icon: Icons.security,    title: 'Настройки безопасности', onTap: () {}),
             ],
           ),

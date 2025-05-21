@@ -7,6 +7,7 @@ class OrderModel {
   final String status;
   final DateTime scheduledFor;
   final List<Child> children;
+  final String totalCost;
 
   OrderModel({
     required this.id,
@@ -15,6 +16,7 @@ class OrderModel {
     required this.status,
     required this.scheduledFor,
     required this.children,
+    required this.totalCost,
   });
 
   factory OrderModel.fromJson(Map<String, dynamic> json) {
@@ -23,6 +25,7 @@ class OrderModel {
       serviceType: json['service_type'] ?? '',
       description: json['description'] ?? '',
       status: json['status'] ?? '',
+      totalCost: json['total_cost'] ?? '',
       scheduledFor: DateTime.parse(json['scheduled_for']),
       children: (json['children'] as List<dynamic>? ?? [])
           .map((c) => Child.fromJson(c))

@@ -15,6 +15,8 @@ const reviewRoutes = require('./routes/review.routes');
 const paymentRoutes = require('./routes/payment.routes');
 const notificationRoutes = require('./routes/notification.routes');
 const infoPanelRoutes = require('./routes/info.routes');
+const moneyRoutes = require('./routes/money.routes');
+
 
 // Create an Express application
 const app = express();
@@ -61,6 +63,7 @@ app.use('/api/reviews', reviewRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/info-panels', infoPanelRoutes);
+app.use('/api/money', moneyRoutes);
 
 // --- Socket.IO ---
 //  Handle Socket.IO connections and events here.

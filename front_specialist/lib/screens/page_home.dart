@@ -109,6 +109,10 @@ class _HomePageState extends State<HomePage> {
                             Text(
                               'Дата: ${order.scheduledFor.toLocal().toString().split(".")[0]}',
                             ),
+                            Text(
+                              'Стоимость: ${order.totalCost}  ₸',
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
                             const SizedBox(height: 8),
                             if (order.children.isNotEmpty) ...[
                               Text('Дети:', style: TextStyle(fontWeight: FontWeight.bold)),

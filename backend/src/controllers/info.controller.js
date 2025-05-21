@@ -1,3 +1,4 @@
+//backend\src\controllers\info.controller.js
 const { InfoPanel } = require('../models/info.model');
 
 const infoPanelController = {

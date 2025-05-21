@@ -67,7 +67,7 @@ const specialistController = {
       pfp_url: specialistProfile.user?.pfp_url,
       // Add other relevant fields
     };
-
+    console.log('profileData:', profileData);
     res.status(200).json(profileData);
   } catch (error) {
     console.error('Error getting specialist profile:', error);

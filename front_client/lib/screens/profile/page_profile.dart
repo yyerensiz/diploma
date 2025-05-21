@@ -8,6 +8,7 @@ import '../../models/model_child.dart';
 import '../../models/model_user.dart';
 import '../../services/auth_service.dart';
 import 'edit_profile.dart';
+import 'page_payments.dart';
 
 
 class ProfilePage extends StatefulWidget {
@@ -202,7 +203,10 @@ Widget build(BuildContext context) {
           icon: Icons.payment,
           title: 'Платежные данные',
           onTap: () {
-            // TODO: Навигация к платежным данным
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => PaymentPage()),
+            );
           },
         ),
         ProfileMenuButton(

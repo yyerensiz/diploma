@@ -1,3 +1,4 @@
+//backend\src\routes\order.routes.js
 const express        = require('express');
 const router         = express.Router();
 const orderController = require('../controllers/order.controller');
@@ -37,7 +38,7 @@ router.post(
 router.put(
   '/:id',
   authMiddleware.authenticate,
-  authMiddleware.authorize(['specialist']),
+  authMiddleware.authorize(['specialist','client']),
   orderController.updateOrder
 );
 

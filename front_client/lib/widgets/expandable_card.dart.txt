@@ -1,0 +1,157 @@
+class _FoldableOrderList extends StatefulWidget {
+  final List<Order> orders;
+  final Future<void> Function(String, String) onStatusChange;
+  final String Function(DateTime) formatDate;
+  final Future<void> Function() reload;
+
+  const _FoldableOrderList({
+    required this.orders,
+    required this.onStatusChange,
+    required this.formatDate,
+    required this.reload,
+  });
+
+  @override
+  State<_FoldableOrderList> createState() => _FoldableOrderListState();
+}
+
+class _FoldableOrderListState extends State<_FoldableOrderList> {
+  late List<bool> _expanded;
+
+  @override
+  void initState() {
+    super.initState();
+    _expanded = List.generate(widget.orders.length, (_) => false);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ExpansionPanelList(
+      expansionCallback: (index, isOpen) {
+        setState(() {
+          _expanded[index] = !_expanded[index];
+        });
+      },
+      animationDuration: Duration(milliseconds: 300),
+      elevation: 2,
+      children: widget.orders.asMap().entries.map((entry) {
+        final idx = entry.key;
+        final order = entry.value;
+
+        return ExpansionPanel(
+          isExpanded: _expanded[idx],
+          canTapOnHeader: true,
+          headerBuilder: (_, __) => ListTile(
+            title: Text(order.serviceType, style: TextStyle(fontWeight: FontWeight.w600)),
+            subtitle: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(widget.formatDate(order.scheduledFor)),
+                SizedBox(height: 4),
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: Colors.blue.shade100,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(order.status, style: TextStyle(fontSize: 12)),
+                ),
+              ],
+            ),
+          ),
+          body: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Специалист: ${order.specialistName ?? '-'}'),
+                SizedBox(height: 8),
+                Text('Описание: ${order.description}'),
+                SizedBox(height: 8),
+                Text('Стоимость: ${order.totalCost} ₸', style: TextStyle(fontWeight: FontWeight.bold)),
+
+                if (order.children.isNotEmpty) ...[
+                  SizedBox(height: 12),
+                  Text('Дети:', style: TextStyle(fontWeight: FontWeight.bold)),
+                  SizedBox(height: 8),
+                  SizedBox(
+                    height: 70,
+                    child: ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: order.children.length,
+                      separatorBuilder: (_, __) => SizedBox(width: 12),
+                      itemBuilder: (_, j) {
+                        final kid = order.children[j];
+                        return GestureDetector(
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => ChildDetailPage(child: kid),
+                            ),
+                          ),
+                          child: Column(
+                            children: [
+                              CircleAvatar(
+                                radius: 25,
+                                backgroundImage: NetworkImage(
+                                  kid.pfpUrl ?? 'https://via.placeholder.com/50',
+                                ),
+                              ),
+                              SizedBox(height: 4),
+                              SizedBox(
+                                width: 60,
+                                child: Text(
+                                  kid.name,
+                                  overflow: TextOverflow.ellipsis,
+                                  textAlign: TextAlign.center,
+                                  style: Theme.of(context).textTheme.bodySmall,
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ],
+
+                SizedBox(height: 12),
+                if (order.status == 'accepted') ...[
+                  Center(
+                    child: ElevatedButton(
+                      onPressed: () => widget.onStatusChange(order.id!, 'in_progress'),
+                      child: Text('Начать работу'),
+                    ),
+                  ),
+                ] else if (order.status == 'in_progress') ...[
+                  Text('В работе', style: TextStyle(color: Colors.blue))
+                ] else if (order.status == 'cancelled') ...[
+                  Text('Специалист отклонил заказ', style: TextStyle(color: Colors.red))
+                ] else if (order.status == 'completed') ...[
+                  Center(
+                    child: ElevatedButton(
+                      onPressed: () async {
+                        final posted = await Navigator.push<bool>(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => ReviewFormPage(order.id!, order.specialistId!),
+                          ),
+                        );
+                        if (posted == true) widget.reload();
+                      },
+                      child: Text('Оставить отзыв'),
+                    ),
+                  ),
+                  SizedBox(height: 8),
+                  Text('Заказ завершён', style: TextStyle(color: Colors.green))
+                ] else if (order.status == 'pending') ...[
+                  Text('Ожидает подтверждения специалиста', style: TextStyle(color: Colors.orange))
+                ],
+              ],
+            ),
+          ),
+        );
+      }).toList(),
+    );
+  }
+}

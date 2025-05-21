@@ -5,6 +5,13 @@ const { Payment } = require('../models/payment.model');
 const { Op } = require('sequelize');
 const { Specialist } = require('../models/specialist.model');
 const { Child } = require('../models/child.model'); // Import the Child model
+// new imports for payment
+// const { sequelize } = require('../config/database.config');    // ← ADD THIS
+const { db } = require('../config/database.config');
+const { Wallet } = require('../models/wallet.model');
+const { Transaction } = require('../models/transaction.model');
+const { Subsidy } = require('../models/subsidy.model');
+
 const orderController = {
   /**
    * Retrieves order details by ID.
@@ -112,7 +119,7 @@ async createOrder(req, res) {
       order_id: order.id,
       client_id,
       specialist_id,
-      amount: order.total_cost * 2,
+      amount: order.total_cost,
       payment_method: 'cash',
       status: 'pending',
     });
@@ -167,29 +174,33 @@ async createOrder(req, res) {
    */
  async getClientOrders(req, res) {
   try {
-    const authenticatedClientId = req.user.user_id; // or req.user.id, depending on your model
-    console.log('Found user:', req.user?.user_id, req.user?.firebase_uid);
+    const clientId = req.user.user_id;
+    const orders = await Order.findAll({
+      where: {
+        client_id: clientId,
+        //status: { [Op.ne]: OrderStatus.completed }
+      },
+      include: [{
+        model: Specialist,
+        as: 'specialist',
+        include: [{ model: User, as: 'user', attributes: ['id','full_name','pfp_url'] }]
+      }],
+      order: [['created_at','DESC']]
+    });
 
-  
+    // manually load children for each order
+    await Promise.all(orders.map(async o => {
+      const kids = await Child.findAll({ where: { id: o.child_ids || [] } });
+      o.dataValues.children = kids;
+    }));
 
-const orders = await Order.findAll({
-  where: {
-    client_id: authenticatedClientId,
-    status: { [Op.ne]: 'completed' }
-  },
-  include: [{
-    model: Specialist,
-    as: 'specialist',
-    include: [{ model: User, as: 'user' }]
-  }],
-  order: [['created_at', 'DESC']]
-});
-    res.status(200).json({ orders });
-  } catch (error) {
-    console.error('Error getting client orders:', error);
-    res.status(500).json({ error: 'Failed to retrieve client orders' });
+    return res.json({ orders });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: 'Failed to retrieve client orders' });
   }
 },
+
 
 
   /**
@@ -221,37 +232,187 @@ const orders = await Order.findAll({
 },
 
   /** PUT /api/orders/:id */
-  async updateOrder(req, res) {
-    try {
-      const orderId = parseInt(req.params.id, 10);
-      const meUserId = req.user.user_id;
+//   async updateOrder(req, res) {
+//   try {
+//     const orderId    = parseInt(req.params.id,   10);
+//     const newStatus  = req.body.status;
+//     const meUserId   = req.user.user_id;
+//     const meRole     = req.user.role; // 'client' or 'specialist'
 
-      // 1) Find your specialist record
-      const specialist = await Specialist.findOne({ where: { user_id: meUserId } });
-      if (!specialist) {
-        return res.status(404).json({ error: 'Specialist profile not found' });
-      }
+//     // 1) load order
+//     const order = await Order.findByPk(orderId);
+//     if (!order) return res.status(404).json({ error: 'Order not found' });
 
-      // 2) Load the order and ensure it belongs to *your* specialist.id
-      const order = await Order.findOne({
-        where: {
-          id: orderId,
-          specialist_id: specialist.id,
+//     // 2) branch by role
+//     if (meRole === 'specialist') {
+//       // only the assigned specialist can change
+//       const spec = await Specialist.findOne({ where: { user_id: meUserId }});
+//       if (!spec || spec.id !== order.specialist_id) {
+//         return res.status(403).json({ error: 'Unauthorized' });
+//       }
+
+//       // allowed transitions for specialist:
+//       // pending → accepted or cancelled
+//       // in_progress → completed
+//       if (order.status === OrderStatus.pending
+//         && [OrderStatus.accepted, OrderStatus.cancelled].includes(newStatus)) {
+//         // ok
+//       } else if (order.status === OrderStatus.in_progress
+//         && newStatus === OrderStatus.completed) {
+//         // ok
+//       } else {
+//         return res.status(400).json({ error: `Cannot ${newStatus} from ${order.status}` });
+//       }
+
+//     } else if (meRole === 'client') {
+//       // only the ordering client can change
+//       if (order.client_id !== meUserId) {
+//         return res.status(403).json({ error: 'Unauthorized' });
+//       }
+
+//       // allowed only: accepted → in_progress
+//       if (!(order.status === OrderStatus.accepted
+//          && newStatus === OrderStatus.in_progress)) {
+//         return res.status(400).json({ error: `Clients may only start accepted orders` });
+//       }
+
+//     } else {
+//       return res.status(403).json({ error: 'Unauthorized role' });
+//     }
+
+//     // 3) finally apply
+//     order.status = newStatus;
+//     await order.save();
+
+//     // 4) you might want to update the payment status once completed
+//     if (newStatus === OrderStatus.completed) {
+//       await Payment.update(
+//         { status: 'completed' },
+//         { where: { order_id: order.id } }
+//       );
+//     }
+
+//     return res.json({ message: 'Order updated', order });
+//   }
+//   catch (err) {
+//     console.error(err);
+//     return res.status(500).json({ error: 'Failed to update order' });
+//   }
+// },
+async updateOrder(req, res) {
+  try {
+    const orderId   = parseInt(req.params.id, 10);
+    const meUser    = req.user;      // { user_id, role, … }
+    const newStatus = req.body.status;
+
+    const order = await Order.findByPk(orderId);
+    if (!order) return res.status(404).json({ error: 'Order not found' });
+
+    // … your role & transition checks here …
+
+    if (meUser.role === 'specialist' && newStatus === OrderStatus.completed) {
+      await db.transaction(async (t) => {
+        // mark order completed
+        await order.update({ status: newStatus }, { transaction: t });
+
+        // load (or create) wallets
+        const [clientWallet] = await Wallet.findOrCreate({
+          where:      { user_id: order.client_id },
+          defaults:   { balance: 0 },
+          transaction: t,
+        });
+        // const [specWallet] = await Wallet.findOrCreate({
+        //   where:      { user_id: order.specialist_id },
+        //   defaults:   { balance: 0 },
+        //   transaction: t,
+        // });
+        // Load the specialist row to get the user_id
+        const specialist = await Specialist.findByPk(order.specialist_id, { transaction: t });
+        if (!specialist) throw new Error('Specialist not found');
+
+        // Now use specialist.user_id to find the wallet
+        const [specWallet] = await Wallet.findOrCreate({
+          where:      { user_id: specialist.user_id },
+          defaults:   { balance: 0 },
+          transaction: t,
+        });
+        // specWallet.balance += order.total_cost;
+        // await specWallet.save({ transaction: t });
+        // compute subsidy
+        const sub            = await Subsidy.findOne({
+          where:      { client_id: order.client_id },
+          transaction: t,
+        });
+        const pct            = sub?.percentage || 0;
+        const subsidyAmount  = order.total_cost * pct;
+        const clientPays     = order.total_cost - subsidyAmount;
+
+        if (clientWallet.balance < clientPays) {
+          throw new Error('Insufficient balance');
         }
+
+        // 1) deduct client
+        clientWallet.balance -= clientPays;
+        await clientWallet.save({ transaction: t });
+        console.log('TO SPECIALIST TOTAL COST:', order.total_cost);
+        console.log('TO SPECIALIST CLIENT PAYS:', clientPays);
+        console.log('SUBSIDY:', subsidyAmount);
+        console.log('CLIENT WALLET BALANCE:', clientWallet.balance);
+        console.log('SPEC WALLET BALANCE:', specWallet.balance);
+        console.log('SPEC USER ID:', specialist.user_id);
+        console.log('SPEC WALLET ID:', specWallet.id);
+        //console.log(':', specWallet.);
+
+        // 2) credit specialist with full cost
+        specWallet.balance += order.total_cost;
+        // await specWallet.save({ transaction: t });  // ← make sure this is specWallet!
+        await Wallet.update(
+  { balance: db.literal(`balance + ${order.total_cost}`) },
+  { where: { id: specWallet.id }, transaction: t }
+);
+
+        // 3) record the net‐payment transaction
+        const netTx = await Transaction.create({
+  from_user_id: order.client_id,
+  to_user_id:   specialist.user_id, // <-- FIXED
+  order_id:     order.id,
+  amount:       clientPays,
+  type:         'payment',
+  status:       'completed',
+}, { transaction: t });
+
+if (subsidyAmount > 0) {
+  await Transaction.create({
+    from_user_id: null,
+    to_user_id:   specialist.user_id, // <-- FIXED
+    order_id:     order.id,
+    amount:       subsidyAmount,
+    type:         'subsidy',
+    status:       'completed',
+  }, { transaction: t });
+}
+
+        // 5) mark the original Payment row completed & link it
+        await Payment.update({
+          status:         'completed',
+          transaction_id: netTx.id,
+        }, {
+          where:       { order_id: order.id },
+          transaction: t,
+        });
       });
-      if (!order) {
-        return res.status(403).json({ error: 'Unauthorized to update this order' });
-      }
-
-      // 3) Apply updates (e.g. status)
-      await order.update(req.body);
-
-      return res.status(200).json({ message: 'Order updated successfully', order });
-    } catch (err) {
-      console.error('Error updating order:', err);
-      return res.status(500).json({ error: 'Failed to update order' });
+    } else {
+      // other flows: just update status
+      await order.update({ status: newStatus });
     }
-  },
+
+    return res.status(200).json({ message: 'Order updated', order });
+  } catch (err) {
+    console.error('Error updating order:', err);
+    return res.status(500).json({ error: err.message });
+  }
+},
+
 
 };
 

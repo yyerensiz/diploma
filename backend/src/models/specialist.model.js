@@ -37,7 +37,11 @@ const Specialist = db.define('specialist', {
   service_ids: {
     type: DataTypes.ARRAY(DataTypes.INTEGER), // Assuming service_ids is an array of integers
     allowNull: true,
-  }
+  },
+  verified: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false,
+  },
 }, {
   tableName: 'specialists',
   timestamps: false,

@@ -25,4 +25,8 @@ router.post(
   ]),
   specialistController.uploadVerificationDocs
 );
+// router.post(
+//   '/verify/approve/:id',
+//   specialistController.approveSpecialist
+// );
 module.exports = router;

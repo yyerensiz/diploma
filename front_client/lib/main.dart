@@ -102,8 +102,8 @@ class MyApp extends StatelessWidget {
           textTheme: const TextTheme(
             headlineLarge: TextStyle(color: primaryColor, fontWeight: FontWeight.bold),
             titleLarge: TextStyle(color: secondaryColor),
-            bodyLarge: TextStyle(color: secondaryColor),
-            bodyMedium: TextStyle(color: secondaryColor),
+            bodyLarge: TextStyle(color: Color.fromARGB(255, 0, 0, 0)),
+            bodyMedium: TextStyle(color: Color.fromARGB(255, 0, 0, 0)),
           ),
           elevatedButtonTheme: ElevatedButtonThemeData(
             style: ElevatedButton.styleFrom(

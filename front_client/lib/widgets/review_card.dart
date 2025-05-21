@@ -1,15 +1,16 @@
-// Review Card Widget
-
+//front_client\lib\widgets\review_card.dart
 import 'package:flutter/material.dart';
 
 class ReviewCard extends StatelessWidget {
   final String authorName;
+  final String? specialistId;
   final double rating;
   final String date;
   final String text;
 
   const ReviewCard({
     required this.authorName,
+    this.specialistId,
     required this.rating,
     required this.date,
     required this.text,

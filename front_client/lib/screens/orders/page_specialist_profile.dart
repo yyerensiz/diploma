@@ -1,10 +1,13 @@
+// front_client/lib/screens/orders/page_specialist_profile.dart
+
 import 'package:flutter/material.dart';
-import 'package:front_client/models/model_order.dart';
+import 'package:intl/intl.dart';
+
 import 'package:front_client/models/model_specialist.dart';
+import 'package:front_client/models/model_review.dart';
 import 'package:front_client/screens/orders/page_service_order.dart';
-import 'package:front_client/services/service_orders.dart';
+import 'package:front_client/services/service_reviews.dart';
 import 'package:front_client/widgets/review_card.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 
 class SpecialistProfilePage extends StatefulWidget {
   final Specialist specialist;
@@ -33,44 +36,58 @@ class SpecialistProfilePage extends StatefulWidget {
 }
 
 class _SpecialistProfilePageState extends State<SpecialistProfilePage> {
+  late Future<List<Review>> _reviewsFuture;
   bool _isLoading = false;
 
-  // Go to order creation, always preselect this specialist
+  @override
+  void initState() {
+    super.initState();
+    _reviewsFuture =
+        ReviewService().fetchSpecialistReviews(widget.specialist.id);
+  }
+
   Future<void> _handleRequestService() async {
     if (_isLoading) return;
     final result = await Navigator.push<Map<String, dynamic>>(
       context,
       MaterialPageRoute(
         builder: (_) => ServiceDetailsPage(
-          serviceName: '', // let user choose in order page
+          serviceName: widget.serviceType ?? '',
           preselectedSpecialist: widget.specialist,
         ),
       ),
     );
+    // you can handle post-order logic here if needed
+  }
 
-    // After returning from order creation, show a confirmation if needed.
-    // You can handle order completion/feedback here if you want.
+  Widget _infoRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: Row(
+        children: [
+          Text("$label: ",
+              style: const TextStyle(fontWeight: FontWeight.bold)),
+          Flexible(child: Text(value)),
+        ],
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final s = widget.specialist;
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('Specialist Profile'),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.chat),
-            onPressed: () {},
-          ),
+          IconButton(icon: const Icon(Icons.chat), onPressed: () {}),
         ],
       ),
       body: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Profile picture and name
+            // Header
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(16),
@@ -79,13 +96,14 @@ class _SpecialistProfilePageState extends State<SpecialistProfilePage> {
                 children: [
                   CircleAvatar(
                     radius: 60,
-                    backgroundImage: s.pfpUrl != null && s.pfpUrl!.isNotEmpty
+                    backgroundImage: (s.pfpUrl != null && s.pfpUrl!.isNotEmpty)
                         ? NetworkImage(s.pfpUrl!)
                         : const AssetImage('assets/images/default_pfp.png')
                             as ImageProvider,
                   ),
                   const SizedBox(height: 16),
-                  Text(s.name, style: Theme.of(context).textTheme.headlineSmall),
+                  Text(s.name,
+                      style: Theme.of(context).textTheme.headlineSmall),
                   const SizedBox(height: 8),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -99,34 +117,64 @@ class _SpecialistProfilePageState extends State<SpecialistProfilePage> {
                 ],
               ),
             ),
-            // Specialist details
+
+            // Details
             Padding(
               padding: const EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('About Specialist', style: Theme.of(context).textTheme.titleLarge),
+                  Text('About Specialist',
+                      style: Theme.of(context).textTheme.titleLarge),
                   const SizedBox(height: 8),
-                  Text(s.description ?? 'No description provided.'),
+                  Text(s.description ?? 'Нет описания'),
                   const SizedBox(height: 16),
-                  _infoRow('Hourly Rate', s.hourlyRate != null ? '${s.hourlyRate} ₸/hr' : "-"),
-                  _infoRow('Available Times', s.availableTimes ?? "-"),
-                  _infoRow('Certified', s.verified == true ? "Yes" : "No"),
-                  _infoRow('Phone', s.phone ?? "-"),
+                  _infoRow('Hourly rate',
+                      s.hourlyRate != null ? '${s.hourlyRate} ₸/h' : '-'),
+                  _infoRow('Available time', s.availableTimes ?? '-'),
+                  _infoRow('Certified', s.verified == true ? 'Yes' : 'No'),
+                  _infoRow('Phone', s.phone ?? '-'),
                   const SizedBox(height: 24),
-                  Text('Reviews', style: Theme.of(context).textTheme.titleLarge),
+
+                  // Reviews header
+                  Text('Reviews',
+                      style: Theme.of(context).textTheme.titleLarge),
                   const SizedBox(height: 8),
-                  ListView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: 3,
-                    itemBuilder: (context, index) {
-                      return ReviewCard(
-                        authorName: 'Client ${index + 1}',
-                        rating: 4.5,
-                        date: '10 March 2024',
-                        text:
-                            'Very good specialist, punctual and responsible. The children are delighted!',
+
+                  // Reviews list
+                  FutureBuilder<List<Review>>(
+                    future: _reviewsFuture,
+                    builder: (ctx, snap) {
+                      if (snap.connectionState == ConnectionState.waiting) {
+                        return const Center(
+                          child: Padding(
+                            padding: EdgeInsets.all(16),
+                            child: CircularProgressIndicator(),
+                          ),
+                        );
+                      }
+                      if (snap.hasError) {
+                        return const Text('Ошибка загрузки отзывов');
+                      }
+                      final reviews = snap.data ?? [];
+                      if (reviews.isEmpty) {
+                        return const Text('Пока нет отзывов');
+                      }
+                      return ListView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: reviews.length,
+                        itemBuilder: (_, i) {
+                          final r = reviews[i];
+                          final date =
+                              DateFormat('dd MMM yyyy').format(r.createdAt);
+                          return ReviewCard(
+                            authorName: r.clientName,
+                            rating: r.rating.toDouble(),
+                            date: date,
+                            text: r.comment,
+                          );
+                        },
                       );
                     },
                   ),
@@ -136,6 +184,8 @@ class _SpecialistProfilePageState extends State<SpecialistProfilePage> {
           ],
         ),
       ),
+
+      // Bottom “Request Service” button
       bottomNavigationBar: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(16),
@@ -143,23 +193,11 @@ class _SpecialistProfilePageState extends State<SpecialistProfilePage> {
             onPressed: _handleRequestService,
             child: const Padding(
               padding: EdgeInsets.all(16),
-              child: Text('Request Service', style: TextStyle(fontSize: 18)),
+              child:
+                  Text('Request order', style: TextStyle(fontSize: 18)),
             ),
           ),
         ),
-      ),
-    );
-  }
-
-  // Helper for info lines
-  Widget _infoRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 2),
-      child: Row(
-        children: [
-          Text("$label: ", style: const TextStyle(fontWeight: FontWeight.bold)),
-          Flexible(child: Text(value)),
-        ],
       ),
     );
   }

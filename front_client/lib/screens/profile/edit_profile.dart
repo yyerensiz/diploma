@@ -40,7 +40,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
     "full_name": _nameController.text,
     "phone": _phoneController.text,
     "address": _addressController.text,
-    "profileImageUrl": _imageController.text,
+    "pfp_url": _imageController.text,
   };
   final userId = user?.uid;
   final response = await http.put(

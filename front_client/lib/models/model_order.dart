@@ -1,3 +1,6 @@
+//front_client\lib\models\model_order.dart
+import 'model_child.dart';
+
 class Order {
   final String? id;
   final String serviceType;
@@ -5,9 +8,10 @@ class Order {
   final String status;
   final DateTime scheduledFor;
   final List<int> childrenIds;
+  final List<Child> children;        // ← NEW
   final String? specialistId;
   final double totalCost;
-  final Map<String, dynamic>? specialist; // Accepts nested specialist data
+  final Map<String, dynamic>? specialist;
 
   Order({
     this.id,
@@ -16,10 +20,40 @@ class Order {
     required this.status,
     required this.scheduledFor,
     required this.childrenIds,
+    this.children = const [],         // ← NEW DEFAULT
     this.specialistId,
     required this.totalCost,
-    this.specialist, // Add to constructor
+    this.specialist,
   });
+
+  factory Order.fromJson(Map<String, dynamic> json) {
+    // parse totalCost etc...
+    final rawCost = json['total_cost'];
+    double parsedTotalCost = rawCost is num
+        ? rawCost.toDouble()
+        : double.tryParse(rawCost.toString()) ?? 0.0;
+
+    // IDs array
+    final List<int> ids = (json['child_ids'] as List? ?? []).cast<int>();
+
+    // CHILDREN objects array (if your backend now includes them)
+    final List<Child> kids = (json['children'] as List<dynamic>? ?? [])
+        .map((c) => Child.fromJson(c as Map<String, dynamic>))
+        .toList();
+
+    return Order(
+      id: json['id']?.toString(),
+      serviceType: json['service_type'] ?? '',
+      description: json['description'] ?? '',
+      status: json['status'] ?? '',
+      scheduledFor: DateTime.parse(json['scheduled_for']),
+      childrenIds: ids,
+      children: kids,                         // ← pass them in
+      specialistId: json['specialist_id']?.toString(),
+      totalCost: parsedTotalCost,
+      specialist: json['specialist'] as Map<String, dynamic>?,
+    );
+  }
 
   Map<String, dynamic> toJson() {
     return {
@@ -35,43 +69,11 @@ class Order {
   }
 
   String? get specialistName {
-  if (specialist == null) return null;
-  // If 'specialist' has nested 'user'
-  if (specialist?['user'] != null) {
-    return specialist?['user']?['full_name'] as String?;
-  }
-  // Fallback if not nested (just in case)
-  return specialist?['full_name'] as String? ?? specialist?['name'] as String?;
-}
-
-
-  factory Order.fromJson(Map<String, dynamic> json) {
-    final totalCostRaw = json['total_cost'];
-    double parsedTotalCost;
-    if (totalCostRaw is num) {
-      parsedTotalCost = totalCostRaw.toDouble();
-    } else if (totalCostRaw is String) {
-      parsedTotalCost = double.tryParse(totalCostRaw) ?? 0.0;
-    } else {
-      parsedTotalCost = 0.0;
+    if (specialist == null) return null;
+    if (specialist!['user'] != null) {
+      return specialist!['user']['full_name'] as String?;
     }
-
-    // Map child_ids to List<int> safely
-    List<int> childrenList = [];
-    if (json['child_ids'] is List) {
-      childrenList = List<int>.from(json['child_ids']);
-    }
-
-    return Order(
-      id: json['id']?.toString(),
-      serviceType: json['service_type'] ?? '',
-      description: json['description'] ?? '',
-      status: json['status'] ?? '',
-      scheduledFor: DateTime.parse(json['scheduled_for']),
-      childrenIds: childrenList,
-      specialistId: json['specialist_id']?.toString(),
-      totalCost: parsedTotalCost,
-      specialist: json['specialist'] as Map<String, dynamic>?, // Accepts nested map
-    );
+    return (specialist!['full_name'] as String?) ??
+           (specialist!['name'] as String?);
   }
 }

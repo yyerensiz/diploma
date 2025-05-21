@@ -29,6 +29,7 @@ dependencies:
   firebase_messaging: ^15.2.5
   flutter_localizations:
     sdk: flutter
+  file_picker: ^10.1.9
 
 dev_dependencies:
   flutter_test:

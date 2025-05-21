@@ -80,11 +80,6 @@ class _SearchPageState extends State<SearchPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Find Service',
-            style: Theme.of(context).textTheme.headlineMedium,
-          ),
-          const SizedBox(height: 24),
           // Services grid
           Text(
             'Services',
@@ -117,6 +112,11 @@ class _SearchPageState extends State<SearchPage> {
           ),
           const SizedBox(height: 24),
           // Search bar below services
+          Text(
+            'Specialists',
+            style: Theme.of(context).textTheme.titleLarge,
+          ),
+          const SizedBox(height: 16),
           TextField(
             controller: _searchController,
             decoration: const InputDecoration(
@@ -126,11 +126,7 @@ class _SearchPageState extends State<SearchPage> {
             ),
           ),
           const SizedBox(height: 24),
-          Text(
-            'Specialists',
-            style: Theme.of(context).textTheme.titleLarge,
-          ),
-          const SizedBox(height: 16),
+          
           filteredSpecialists.isEmpty
               ? Padding(
                   padding: const EdgeInsets.all(32),

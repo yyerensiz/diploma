@@ -11,12 +11,18 @@ class MainScreen extends StatefulWidget {
 }
 
 class _MainScreenState extends State<MainScreen> {
-  int _selectedIndex = 1; // Начинаем с домашней страницы
+  int _selectedIndex = 1; // Start from HomePage
 
   final List<Widget> _pages = [
     SearchScreen(),
     HomePage(),
     ProfilePage(),
+  ];
+
+  final List<String> _pageTitles = [
+    'Find Service',
+    'General Information',
+    'Profile',
   ];
 
   void _onItemTapped(int index) {
@@ -30,14 +36,16 @@ class _MainScreenState extends State<MainScreen> {
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
-          icon: Icon(Icons.notifications),
+          icon: Icon(Icons.translate),
           onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => NotificationsPage()),
-            );
+            // Implement translation toggle
           },
         ),
+        title: Text(
+          _pageTitles[_selectedIndex],
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        centerTitle: true,
         actions: [
           IconButton(
             icon: Icon(Icons.settings),
@@ -54,8 +62,8 @@ class _MainScreenState extends State<MainScreen> {
       bottomNavigationBar: BottomNavigationBar(
         items: const <BottomNavigationBarItem>[
           BottomNavigationBarItem(
-            icon: Icon(Icons.search),
-            label: 'Search',
+            icon: Icon(Icons.list),
+            label: 'Services',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.home),
@@ -71,4 +79,4 @@ class _MainScreenState extends State<MainScreen> {
       ),
     );
   }
-} 
+}
