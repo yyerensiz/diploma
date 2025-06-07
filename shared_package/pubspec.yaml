@@ -1,0 +1,42 @@
+name: shared_carenest #  Changed to a more specific name
+description: "Shared code and UI components for the CareNest parent and specialist apps."
+version: 1.0.0 #  Start with 1.0.0 (or increment if you've already had versions)
+publish_to: none #  Important:  Prevent accidental publishing
+
+environment:
+  sdk: ">=3.1.5 <4.0.0" #  Match your apps' SDK constraint
+  flutter: ">=3.0.0" #  If you use flutter features
+
+dependencies:
+  flutter:
+    sdk: flutter
+  provider: ^6.1.1 #  Match your apps' version
+  http: ^1.1.0 #  Match your apps' version
+  shared_preferences: ^2.5.2 #  Match your apps' version
+  firebase_auth: ^5.5.2 #  Match your apps' version
+  cloud_firestore: 5.6.6 #  Match your apps' version
+  google_sign_in: ^6.3.0 #  Match your apps' version
+  firebase_core: ^3.13.0 #  Match your apps' version
+  cupertino_icons: ^1.0.2 #  Match your apps' version
+  flutter_localizations: #  Keep if you use localization in shared widgets
+    sdk: flutter
+  firebase_messaging: ^15.2.5
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^2.0.0 #  Match your apps' version
+
+flutter:
+  uses-material-design: true #  If you use Material widgets in shared components
+  #  Example of including assets (if you have shared images, etc.)
+  assets:
+    # - assets/images/shared_icon.png
+    # - assets/translations/ # If you have shared localization files
+  #  Example of including fonts (if you have shared fonts)
+  # fonts:
+  #   - family: OpenSans
+  #     fonts:
+  #       - asset: assets/fonts/OpenSans-Regular.ttf
+  #       - asset: assets/fonts/OpenSans-Bold.ttf
+  #         weight: 700

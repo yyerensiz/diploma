@@ -1,16 +1,25 @@
 name: front_specialist
+<<<<<<< HEAD
 description: "A new Flutter project."
+=======
+description: "CareNest Job - Specialist application"
+>>>>>>> yrys1
 
 publish_to: 'none' 
 
 version: 1.0.0+1
 
 environment:
+<<<<<<< HEAD
   sdk: ^3.7.0
+=======
+  sdk: '>=3.1.5 <4.0.0'
+>>>>>>> yrys1
 
 dependencies:
   flutter:
     sdk: flutter
+<<<<<<< HEAD
   provider: ^6.0.5
   http: ^0.13.5
   shared_preferences: ^2.0.13
@@ -20,12 +29,58 @@ dependencies:
 
   cupertino_icons: ^1.0.8
 
+=======
+  shared_carenest:
+      path: ../shared_package
+  provider: ^6.1.1
+  http: ^1.1.0
+  shared_preferences: ^2.5.2
+  #firebase_auth: ^4.15.3
+  firebase_auth: ^5.5.2
+  # cloud_firestore: ^4.13.6
+  cloud_firestore: 5.6.6
+  image_picker: ^1.0.7
+  google_sign_in: ^6.3.0
+  firebase_core: ^3.13.0
+  cupertino_icons: ^1.0.2
+  flutter_launcher_icons: ^0.14.3
+  firebase_messaging: ^15.2.5
+  flutter_localizations:
+    sdk: flutter
+  easy_localization: ^3.0.0
+>>>>>>> yrys1
 dev_dependencies:
   flutter_test:
     sdk: flutter
 
+<<<<<<< HEAD
   flutter_lints: ^5.0.0
 
 flutter:
 
   uses-material-design: true
+=======
+  flutter_lints: ^2.0.0
+  flutter_native_splash: ^2.3.0
+
+flutter_native_splash:
+  color: "#ffffff"
+  image: assets/images/logo.png
+
+flutter:
+
+  uses-material-design: true
+  assets:
+    - assets/images/icon.jpg
+    - assets\images\icon.jpg
+    - assets/images/
+    - assets/translations/
+
+
+flutter_icons:
+  android: true
+  ios: true
+  image_path: "assets/images/icon.jpg"
+  adaptive_icon_background: "#ffffff"
+  adaptive_icon_foreground: "assets/images/icon.jpg"
+>>>>>>> yrys1

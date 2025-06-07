@@ -8,7 +8,11 @@ plugins {
 android {
     namespace = "com.example.front_specialist"
     compileSdk = flutter.compileSdkVersion
+<<<<<<< HEAD
     ndkVersion = flutter.ndkVersion
+=======
+    ndkVersion = "27.0.12077973"
+>>>>>>> yrys1
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
@@ -24,7 +28,11 @@ android {
         applicationId = "com.example.front_specialist"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
+<<<<<<< HEAD
         minSdk = flutter.minSdkVersion
+=======
+        minSdk = 23
+>>>>>>> yrys1
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName

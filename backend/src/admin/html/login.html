@@ -1,0 +1,55 @@
+<!-- src/admin/login.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  />
+  <title>Admin Panel — Login</title>
+  <link rel="stylesheet" href="../css/style.css" />
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+</head>
+<body>
+  <div class="container" id="login-container">
+    <h1>Admin Login</h1>
+    <form id="login-form">
+      <input
+        type="email"
+        id="email"
+        placeholder="Email"
+        required
+      />
+      <input
+        type="password"
+        id="password"
+        placeholder="Password"
+        required
+      />
+      <button type="submit">Log In</button>
+    </form>
+    <p style="margin-top: 20px;">
+  Don’t have an admin account? <a href="register.html">Register here</a>.
+</p>
+
+    <p id="login-error" style="margin-top: 12px; color: #dc3545;"></p>
+  </div>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyApBBCWuPR7Im5QVR0OIpdhlBDjzKUMj4I",
+      authDomain: "carenest-1519f.firebaseapp.com",
+      projectId: "carenest-1519f",
+      storageBucket: "carenest-1519f.firebasestorage.app",
+      messagingSenderId: "286473724516",
+      appId: "1:286473724516:web:5c1e8e958f958269743571",
+      measurementId: "G-16MPX9KYKS"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+  </script>
+  <script src="../js/login.js"></script>
+</body>
+</html>

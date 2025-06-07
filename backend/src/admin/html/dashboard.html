@@ -1,0 +1,50 @@
+<!-- src/admin/dashboard.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  />
+  <title>Admin Panel — Dashboard</title>
+  <link rel="stylesheet" href="../css/style.css" />
+</head>
+<body>
+  <div class="container">
+    <div id="dashboard-header">
+      <h1>Admin Dashboard</h1>
+      <button id="logout-button">Log Out</button>
+    </div>
+
+    <p id="welcome-msg" style="margin-top:12px;"></p>
+
+    <div id="search-container">
+      <input
+        type="text"
+        id="search-input"
+        placeholder="Search users..."
+      />
+    </div>
+
+    <table id="users-table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Email</th>
+          <th>Full Name</th>
+          <th>Role</th>
+          <th>Verified (for specialists)</th>
+          <th>Subsidy (for clients)</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+      </tbody>
+    </table>
+    <p id="table-error" style="margin-top: 12px; color: #dc3545;"></p>
+  </div>
+
+  <script src="../js/dashboard.js"></script>
+</body>
+</html>
