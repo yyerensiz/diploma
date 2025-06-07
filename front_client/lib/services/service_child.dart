@@ -1,57 +1,74 @@
+// front_client/lib/services/service_children.dart
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_carenest/config.dart';
 import '../models/model_child.dart';
-import 'auth_service.dart'; // for token
 
 class ChildService {
-  final String baseUrl = 'http://192.168.0.230:5000/api/children';
-  
+  final Uri _childrenUrl   = Uri.parse(URL_CHILDREN);
+  final Uri _myChildrenUrl = Uri.parse(URL_CHILDREN_MY);
 
   Future<List<Child>> fetchChildren(String token) async {
-    final String myChildrenUrl = '$baseUrl/my';
-    final response = await http.get(
-      
-      Uri.parse(myChildrenUrl),  // GET /my for list
-      headers: {'Authorization': 'Bearer $token'},
+    try {
+      final resp = await http.get(
+        _myChildrenUrl,
+        headers: {'Authorization': 'Bearer $token'},
+      );
+      if (resp.statusCode == 200) {
+        final data = jsonDecode(resp.body)['children'] as List<dynamic>;
+        return data
+            .map((e) => Child.fromJson(e as Map<String, dynamic>))
+            .toList();
+      }
+      debugPrint('fetchChildren failed [${resp.statusCode}]: ${resp.body}');
+      throw Exception('Failed to fetch children (${resp.statusCode})');
+    } catch (e, st) {
+      debugPrint('Error in fetchChildren: $e\n$st');
+      rethrow;
+    }
+  }
+
+  Future<void> createChild(String token, Child child) async {
+    final resp = await http.post(
+      _childrenUrl,
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json'
+      },
+      body: jsonEncode(child.toJson()),
     );
-    if (response.statusCode == 200) {
-      final List data = jsonDecode(response.body)['children'];
-      return data.map((json) => Child.fromJson(json)).toList();
-    } else {
-      throw Exception('Failed to load children');
+    if (resp.statusCode != 201) {
+      debugPrint('createChild failed [${resp.statusCode}]: ${resp.body}');
+      throw Exception('Failed to create child (${resp.statusCode})');
+    }
+  }
+
+  Future<void> updateChild(String token, int childId, Child updatedChild) async {
+    final uri = Uri.parse('$URL_CHILDREN/$childId');
+    final resp = await http.put(
+      uri,
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json'
+      },
+      body: jsonEncode(updatedChild.toJson()),
+    );
+    if (resp.statusCode != 200) {
+      debugPrint('updateChild failed [${resp.statusCode}]: ${resp.body}');
+      throw Exception('Failed to update child (${resp.statusCode})');
     }
   }
 
   Future<void> deleteChild(String token, int childId) async {
-    await http.delete(
-      Uri.parse('$baseUrl/$childId'), // DELETE /:id without /my
+    final uri = Uri.parse('$URL_CHILDREN/$childId');
+    final resp = await http.delete(
+      uri,
       headers: {'Authorization': 'Bearer $token'},
     );
-  }
-
-  Future<void> createChild(String token, Child child) async {
-    await http.post(
-      Uri.parse(baseUrl), // POST /children (no /my)
-      headers: {
-        'Authorization': 'Bearer $token',
-        'Content-Type': 'application/json',
-      },
-      body: jsonEncode(child.toJson()),
-    );
-  }
-
-  Future<void> updateChild(String token, int childId, Child updatedChild) async {
-    await http.put(
-      Uri.parse('$baseUrl/$childId'), // PUT /:id (no /my)
-      headers: {
-        'Authorization': 'Bearer $token',
-        'Content-Type': 'application/json',
-      },
-      body: jsonEncode(updatedChild.toJson()),
-      
-    );
-    print('Sending update request: $updatedChild');
-    
-
+    if (resp.statusCode != 200) {
+      debugPrint('deleteChild failed [${resp.statusCode}]: ${resp.body}');
+      throw Exception('Failed to delete child (${resp.statusCode})');
+    }
   }
 }

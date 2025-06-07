@@ -1,6 +1,6 @@
 // backend/models/transaction.model.js
-const { DataTypes } = require('sequelize');
-const { db } = require('../config/database.config');
+const {DataTypes} = require('sequelize');
+const {db} = require('../config/database.config');
 
 const Transaction = db.define('transaction', {
   id: {
@@ -10,7 +10,7 @@ const Transaction = db.define('transaction', {
   },
   from_user_id: {
     type: DataTypes.INTEGER,
-    allowNull: true,       // null = system (subsidy)
+    allowNull: true,
   },
   to_user_id: {
     type: DataTypes.INTEGER,
@@ -26,11 +26,11 @@ const Transaction = db.define('transaction', {
   },
   type: {
     type: DataTypes.STRING,
-    allowNull: false,      // e.g. 'payment' or 'subsidy'
+    allowNull: false,
   },
   status: {
     type: DataTypes.STRING,
-    allowNull: false,      // e.g. 'completed'
+    allowNull: false,
   },
 }, {
   tableName: 'transactions',
@@ -39,4 +39,4 @@ const Transaction = db.define('transaction', {
   updatedAt: false,
 });
 
-module.exports = { Transaction };
+module.exports = {Transaction};

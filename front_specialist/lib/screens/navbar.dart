@@ -1,62 +1,78 @@
+//front_specialist\lib\screens\navbar.dart
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'page_home.dart';
-import 'page_profile.dart';
 import 'page_settings.dart';
+import 'page_profile.dart';
 
 class MainScreen extends StatefulWidget {
+  const MainScreen({Key? key}) : super(key: key);
+
   @override
-  _MainScreenState createState() => _MainScreenState();
+  State<MainScreen> createState() => _MainScreenState();
 }
 
 class _MainScreenState extends State<MainScreen> {
-  int _selectedIndex = 1; // Начинаем с домашней страницы
+  int _selectedIndex = 0;
 
-  final List<Widget> _pages = [
-    HomePage(),
-    SpecialistProfilePage(),
-  ];
+  void _onTap(int index) => setState(() => _selectedIndex = index);
 
-  void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
+  void _toggleLocale() {
+    final locales = context.supportedLocales;
+    final current = context.locale;
+    final next = locales[(locales.indexOf(current) + 1) % locales.length];
+    context.setLocale(next);
+
+    setState(() {});
   }
 
   @override
   Widget build(BuildContext context) {
+    final pages = <Widget>[
+      HomePage(),
+      SpecialistProfilePage(),
+    ];
+
+    final labels = [
+      'current_orders'.tr(),
+      'profile'.tr(),
+    ];
+
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.translate),
+          onPressed: _toggleLocale,
+        ),
+        title: Text(labels[_selectedIndex]),
+        centerTitle: true,
         actions: [
           IconButton(
-            icon: Icon(Icons.settings),
+            icon: const Icon(Icons.settings),
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => SettingsPage()),
+                MaterialPageRoute(builder: (_) => SettingsPage()),
               );
             },
           ),
         ],
       ),
-      body: _pages[_selectedIndex],
+      body: pages[_selectedIndex],
       bottomNavigationBar: BottomNavigationBar(
-        items: const <BottomNavigationBarItem>[
+        currentIndex: _selectedIndex,
+        onTap: _onTap,
+        items: [
           BottomNavigationBarItem(
-            icon: Icon(Icons.search),
-            label: 'Search',
+            icon: const Icon(Icons.list),
+            label: labels[0],
           ),
-          // BottomNavigationBarItem(
-          //   icon: Icon(Icons.home),
-          //   label: 'Home',
-          // ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.person),
-            label: 'Profile',
+            icon: const Icon(Icons.person),
+            label: labels[1],
           ),
         ],
-        currentIndex: _selectedIndex,
-        onTap: _onItemTapped,
       ),
     );
   }
-} 
+}

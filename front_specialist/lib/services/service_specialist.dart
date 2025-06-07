@@ -3,11 +3,12 @@ import 'dart:convert';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:image_picker/image_picker.dart';
 import '../models/model_specialist.dart';
+import 'package:shared_carenest/config.dart';
 
 class SpecialistService {
-  static const String baseUrl = 'http://192.168.0.230:5000/api/specialists';
+  static const String baseUrl = URL_SPECIALISTS;
 
-  static Future<SpecialistProfile?> fetchProfile() async {
+  static Future<Specialist?> fetchProfile() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return null;
     final token = await user.getIdToken();
@@ -21,7 +22,7 @@ class SpecialistService {
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
       try {
-        return SpecialistProfile.fromJson(Map<String, dynamic>.from(data));
+        return Specialist.fromJson(Map<String, dynamic>.from(data));
       } catch (e, st) {
         print('Error parsing SpecialistProfile: $e\n$st');
         rethrow;
@@ -31,7 +32,7 @@ class SpecialistService {
     }
   }
 
-  static Future<void> updateProfile(SpecialistProfile updatedProfile) async {
+  static Future<void> updateProfile(Specialist updatedProfile) async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
     final token = await user.getIdToken();

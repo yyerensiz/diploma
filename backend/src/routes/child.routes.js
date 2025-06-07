@@ -4,7 +4,6 @@ const router = express.Router();
 const childController = require('../controllers/child.controller');
 const authMiddleware = require('../middleware/auth.middleware');
 
-//  Child routes
 router.get('/my', authMiddleware.authenticate, authMiddleware.authorize(['client']), childController.getChildren);
 router.get('/:id', authMiddleware.authenticate, childController.getChild);
 router.post('/', authMiddleware.authenticate, authMiddleware.authorize(['client']), childController.createChild);

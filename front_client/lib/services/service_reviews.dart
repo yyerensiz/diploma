@@ -3,11 +3,17 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:firebase_auth/firebase_auth.dart';
 import '../models/model_review.dart';
+import 'package:shared_carenest/config.dart';
 
 class ReviewService {
-  final _baseUrl = 'http://192.168.0.230:5000/api/reviews';
+  final _baseUrl = URL_REVIEWS;
 
-  Future<Review> createReview(String orderId, int rating, String comment, String? specialistId) async {
+  Future<Review> createReview({
+    required int orderId,
+    required int rating,
+    required String comment,
+    required String specialistId,
+  }) async {
     final user = FirebaseAuth.instance.currentUser!;
     final token = await user.getIdToken();
     final body = jsonEncode({

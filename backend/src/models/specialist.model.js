@@ -1,16 +1,16 @@
 // backend/models/specialist.model.js
-const { DataTypes } = require('sequelize');
-const { db } = require('../config/database.config');
-const { User } = require('./user.model');
+const {DataTypes} = require('sequelize');
+const {db} = require('../config/database.config');
+const {User} = require('./user.model');
 
 const Specialist = db.define('specialist', {
   id: {
     type: DataTypes.INTEGER,
     primaryKey: true,
-    autoIncrement: true, // Added autoIncrement
+    autoIncrement: true,
   },
   user_id: {
-    type: DataTypes.INTEGER, // Changed to INTEGER
+    type: DataTypes.INTEGER,
     allowNull: false,
     references: {
       model: User,
@@ -23,7 +23,7 @@ const Specialist = db.define('specialist', {
     allowNull: true
   },
   hourly_rate: {
-    type: DataTypes.DECIMAL(10, 2), // Or FLOAT, depending on your precision needs
+    type: DataTypes.DECIMAL(10, 2), 
     allowNull: true,
   },
   available_times: {
@@ -31,13 +31,13 @@ const Specialist = db.define('specialist', {
     allowNull: true,
   },
   rating: {
-    type: DataTypes.DECIMAL(3, 2), // Assuming rating is out of 5.00
+    type: DataTypes.DECIMAL(3, 2),
     allowNull: true,
   },
-  service_ids: {
-    type: DataTypes.ARRAY(DataTypes.INTEGER), // Assuming service_ids is an array of integers
-    allowNull: true,
-  },
+  // service_ids: {
+  //   type: DataTypes.ARRAY(DataTypes.INTEGER),
+  //   allowNull: true,
+  // },
   verified: {
     type: DataTypes.BOOLEAN,
     defaultValue: false,
@@ -56,4 +56,4 @@ Specialist.belongsTo(User, {
   as: 'user',
 });
 
-module.exports = { Specialist };
+module.exports = {Specialist};

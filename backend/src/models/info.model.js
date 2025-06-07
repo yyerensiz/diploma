@@ -12,4 +12,4 @@ const InfoPanel = db.define('info_panel', {
   timestamps: false
 });
 
-module.exports = { InfoPanel };
+module.exports = {InfoPanel};

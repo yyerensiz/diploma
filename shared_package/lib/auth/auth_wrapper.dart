@@ -1,13 +1,15 @@
+// shared_package/lib/auth/auth_wrapper.dart
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
-import 'package:shared_carenest/auth/login.dart'; // Import the shared LoginScreen
-import 'package:shared_carenest/auth/signup.dart';
-import 'package:shared_carenest/providers/user_provider.dart'; // Import the shared UserProvider
+import 'package:shared_carenest/services/auth_service.dart';
+import '../config.dart';
+import 'login.dart';
+import 'signup.dart';
+import 'package:shared_carenest/providers/user_provider.dart';
+import 'package:shared_carenest/widgets/loading_indicator.dart';
 
-class AuthWrapper extends StatelessWidget {
+class AuthWrapper extends StatefulWidget {
   final String expectedRole;
   final Widget mainScreen;
   final String unauthorizedMessage;
@@ -23,105 +25,70 @@ class AuthWrapper extends StatelessWidget {
     required this.tagline,
   }) : super(key: key);
 
-  Future<String?> _fetchUserRole(User user) async {
-    final idToken = await user.getIdToken();
-    final response = await http.get(
-      Uri.parse('http://192.168.0.230:5000/api/auth/me'),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $idToken',
-      },
-    );
+  @override
+  _AuthWrapperState createState() => _AuthWrapperState();
+}
 
-    if (response.statusCode == 200) {
-      print('--- Full Response Body ---'); // Added logging
-      print(response.body); // Log the entire response body
-      final userData = jsonDecode(response.body);
-      return userData['user']['role'];
-    } else {
-      return null;
-    }
-    
-  }
+class _AuthWrapperState extends State<AuthWrapper> {
+  final _authService = AuthService();
+  bool _hasSignedOut = false;
 
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<User?>(
       stream: FirebaseAuth.instance.authStateChanges(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const LoadingScreen();
-        }
+      builder: (context, authSnap) {
+        if (authSnap.connectionState == ConnectionState.waiting)
+          return const Scaffold(body: Center(child: LoadingIndicator()));
 
-        final user = snapshot.data;
-        // Wrap LoginScreen in a Builder to get the correct context.
+        final user = authSnap.data;
         if (user == null) {
-          return Builder(
-            builder: (context) {
-              return LoginScreen(
-                appName: appName,
-                tagline: tagline,
-                signupScreen: SignupScreen(role: expectedRole),
-              );
-            },
+          // Not signed in → show login immediately
+          return LoginScreen(
+            appName: widget.appName,
+            tagline: widget.tagline,
+            signupScreen: SignupScreen(role: widget.expectedRole),
           );
         }
 
+        // Signed in → check their role once
         return FutureBuilder<String?>(
-        future: _fetchUserRole(user),
-        builder: (context, roleSnapshot) {
-          if (roleSnapshot.connectionState == ConnectionState.waiting) {
-            return const LoadingScreen();
-          }
+          future: _authService.fetchUserRole(user),
+          builder: (context, roleSnap) {
+            if (roleSnap.connectionState == ConnectionState.waiting)
+              return const Scaffold(body: Center(child: LoadingIndicator()));
 
-          print('--- AuthWrapper Role Check ---'); // Added logging
-
-          if (roleSnapshot.hasError || roleSnapshot.data != expectedRole) {
-            print('Expected Role: $expectedRole');
-            if (roleSnapshot.hasData) {
-              print('Fetched Role: "${roleSnapshot.data}"');
-              print('Role Match: ${roleSnapshot.data == expectedRole}');
-            }
-            if (roleSnapshot.hasError) {
-              print('Error fetching role: ${roleSnapshot.error}');
-            }
-
-            WidgetsBinding.instance.addPostFrameCallback((_) async {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(unauthorizedMessage),
-                  backgroundColor: Colors.red,
-                ),
+            final role = roleSnap.data;
+            if (role != widget.expectedRole) {
+              // Only sign out once
+              if (!_hasSignedOut) {
+                _hasSignedOut = true;
+                WidgetsBinding.instance.addPostFrameCallback((_) async {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(widget.unauthorizedMessage),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                  final userProvider =
+                      Provider.of<UserProvider>(context, listen: false);
+                  await userProvider.signOut();
+                  userProvider.clearUserData();
+                });
+              }
+              // Immediately return login screen instead of spinner
+              return LoginScreen(
+                appName: widget.appName,
+                tagline: widget.tagline,
+                signupScreen: SignupScreen(role: widget.expectedRole),
               );
+            }
 
-              final userProvider =
-                  Provider.of<UserProvider>(context, listen: false);
-              await userProvider.signOut();
-              userProvider.clearUserData();
-            });
-
-            return const LoadingScreen();
-          }
-
-          return mainScreen;
-        },
-      );
-        
+            // Role is good → main screen
+            return widget.mainScreen;
+          },
+        );
       },
-    );
-    
-  }
-}
-
-class LoadingScreen extends StatelessWidget {
-  const LoadingScreen({Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return const Scaffold(
-      body: SafeArea(
-        child: Center(child: CircularProgressIndicator()),
-      ),
     );
   }
 }

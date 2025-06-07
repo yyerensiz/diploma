@@ -1,8 +1,8 @@
 // backend/models/payment.model.js
-const { DataTypes } = require('sequelize');
-const { db } = require('../config/database.config');
-const { User } = require('./user.model');
-const { Order } = require('./order.model');
+const {DataTypes} = require('sequelize');
+const {db} = require('../config/database.config');
+const {User} = require('./user.model');
+const {Order} = require('./order.model');
 
 const Payment = db.define('payment', {
   id: {
@@ -11,7 +11,7 @@ const Payment = db.define('payment', {
     autoIncrement: true,
   },
   client_id: {
-    type: DataTypes.INTEGER, // Changed to INTEGER
+    type: DataTypes.INTEGER,
     allowNull: false,
     references: {
       model: User,
@@ -19,14 +19,13 @@ const Payment = db.define('payment', {
     },
   },
   specialist_id:{
-    type: DataTypes.INTEGER, // Changed to INTEGER
+    type: DataTypes.INTEGER,
     allowNull: false,
     references: {
       model: User,
       key: 'id',
     },
   },
-
   order_id: {
     type: DataTypes.INTEGER, 
     allowNull: false,
@@ -68,4 +67,4 @@ Payment.belongsTo(Order, {
   as: 'order',
 });
 
-module.exports = { Payment };
+module.exports = {Payment};

@@ -10,6 +10,5 @@ const infoPanelController = {
       res.status(500).json({ error: 'Failed to load info panels' });
     }
   },
-  // Optionally: add, update, delete for admin
 };
 module.exports = infoPanelController;

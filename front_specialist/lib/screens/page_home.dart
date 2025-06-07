@@ -1,12 +1,13 @@
+//front_specialist\lib\screens\page_home.dart
 import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:front_specialist/screens/page_child_detail.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_carenest/config.dart';
 import '../models/model_order.dart';
-import '../models/model_child.dart';
 import '../services/service_order.dart';
+import 'page_child_detail.dart';
 
 class HomePage extends StatefulWidget {
   @override
@@ -14,7 +15,7 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  List<OrderModel> orders = [];
+  List<Order> orders = [];
   bool isLoading = true;
   int? specialistId;
 
@@ -29,217 +30,138 @@ class _HomePageState extends State<HomePage> {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
     final token = await user.getIdToken();
-    final profileResp = await http.get(
-      Uri.parse('http://192.168.0.230:5000/api/specialists/profile'),
+    final resp = await http.get(
+      Uri.parse(URL_SPECIALIST_PROFILE),
       headers: {'Authorization': 'Bearer $token'},
     );
-    if (profileResp.statusCode == 200) {
-      final data = Map<String, dynamic>.from(jsonDecode(profileResp.body));
-      final int specId = data['id'] ?? data['specialist_id'];
-      setState(() => specialistId = specId);
-      await fetchOrders(specId);
-    } else {
-      setState(() => isLoading = false);
-    }
-  }
-
-  Future<void> fetchOrders(int specialistId) async {
-    try {
-      orders = await OrderService().fetchSpecialistOrders(specialistId);
-    } catch (e) {
-      orders = [];
+    if (resp.statusCode == 200) {
+      final data = jsonDecode(resp.body) as Map<String, dynamic>;
+      specialistId = data['id'] ?? data['specialist_id'];
+      orders = await OrderService().fetchSpecialistOrders(specialistId!);
     }
     setState(() => isLoading = false);
   }
 
-  Future<void> updateOrderStatus(int orderId, String status) async {
-    try {
-      await OrderService().updateOrderStatus(orderId, status);
-      if (specialistId != null) {
-        await fetchOrders(specialistId!);
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Ошибка: $e')),
-      );
-    }
-  }
-
-  void openOrderDetails(OrderModel order) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => OrderDetailPage(
-          order: order,
-          onAccept: () => updateOrderStatus(order.id, 'accepted'),
-          onReject: () => updateOrderStatus(order.id, 'cancelled'),
-          onComplete: () => updateOrderStatus(order.id, 'completed'),
-        ),
-      ),
-    ).then((_) {
-      if (specialistId != null) fetchOrders(specialistId!);
-    });
+  Future<void> _updateOrderStatus(int id, String status) async {
+    await OrderService().updateOrderStatus(id, status);
+    if (specialistId != null) await _loadSpecialistIdAndOrders();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text('Мои заказы')),
-      body: isLoading
-          ? Center(child: CircularProgressIndicator())
-          : orders.isEmpty
-              ? Center(child: Text('Нет доступных заказов'))
-              : ListView.builder(
-                  padding: EdgeInsets.all(16),
-                  itemCount: orders.length,
-                  itemBuilder: (ctx, i) {
-                    final order = orders[i];
-                    return Card(
-                      margin: const EdgeInsets.only(bottom: 16),
-                      child: Padding(
-                        padding: const EdgeInsets.all(12),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(order.serviceType,
-                                style: Theme.of(ctx).textTheme.titleLarge),
-                            const SizedBox(height: 4),
-                            Text('Описание: ${order.description}'),
-                            Text('Статус: ${order.status}'),
-                            Text(
-                              'Дата: ${order.scheduledFor.toLocal().toString().split(".")[0]}',
-                            ),
-                            Text(
-                              'Стоимость: ${order.totalCost}  ₸',
-                              style: TextStyle(fontWeight: FontWeight.bold),
-                            ),
-                            const SizedBox(height: 8),
-                            if (order.children.isNotEmpty) ...[
-                              Text('Дети:', style: TextStyle(fontWeight: FontWeight.bold)),
-                              const SizedBox(height: 8),
-                              SizedBox(
-                                height: 70,
-                                child: ListView.separated(
-                                  scrollDirection: Axis.horizontal,
-                                  itemCount: order.children.length,
-                                  separatorBuilder: (_, __) => const SizedBox(width: 12),
-                                  itemBuilder: (ctx2, j) {
-                                    final child = order.children[j];
-                                    return GestureDetector(
-                                      onTap: () => Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (_) => ChildDetailPage(child: child),
-                                        ),
-                                      ),
-                                      child: Column(
-                                        children: [
-                                          CircleAvatar(
-                                            radius: 25,
-                                            backgroundImage: NetworkImage(
-                                              child.pfpUrl ?? 'https://via.placeholder.com/50',
-                                            ),
-                                          ),
-                                          const SizedBox(height: 4),
-                                          SizedBox(
-                                            width: 60,
-                                            child: Text(
-                                              child.name,
-                                              overflow: TextOverflow.ellipsis,
-                                              textAlign: TextAlign.center,
-                                              style: Theme.of(ctx).textTheme.bodySmall,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    );
-                                  },
+    if (isLoading) return const Center(child: CircularProgressIndicator());
+    if (orders.isEmpty) return Center(child: Text('no_current_orders'.tr()));
+
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: orders.length,
+      itemBuilder: (context, index) {
+        final o = orders[index];
+        final date = o.scheduledFor.toLocal().toString().split('.')[0];
+        return Card(
+          margin: const EdgeInsets.only(bottom: 16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: ExpansionTile(
+            title: Text(
+              o.serviceType,
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
+            subtitle: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('status_${o.status}'.tr()),
+                Text(date),
+              ],
+            ),
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('description_label'.tr(args: [o.description])),
+                    const SizedBox(height: 8),
+                    Text('cost_label'.tr(args: ['${o.totalCost}'])),
+                    if (o.children != null && o.children!.isNotEmpty) ...[
+                      const SizedBox(height: 12),
+                      Text(
+                        'children_label'.tr(),
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 8),
+                      SizedBox(
+                        height: 80,
+                        child: ListView.separated(
+                          scrollDirection: Axis.horizontal,
+                          itemCount: o.children!.length,
+                          separatorBuilder: (_, __) =>
+                              const SizedBox(width: 12),
+                          itemBuilder: (_, j) {
+                            final c = o.children![j];
+                            return GestureDetector(
+                              onTap: () => Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) =>
+                                      ChildDetailPage(child: c),
                                 ),
                               ),
-                              const SizedBox(height: 8),
-                            ],
-                            Align(
-                              alignment: Alignment.centerRight,
-                              child: TextButton(
-                                onPressed: () => openOrderDetails(order),
-                                child: const Text('Подробнее'),
+                              child: Column(
+                                children: [
+                                  CircleAvatar(
+                                    radius: 25,
+                                    backgroundImage: NetworkImage(
+                                      c.pfpUrl ??
+                                          'https://via.placeholder.com/50',
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  SizedBox(
+                                    width: 60,
+                                    child: Text(
+                                      c.name,
+                                      overflow: TextOverflow.ellipsis,
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ),
-                          ],
+                            );
+                          },
                         ),
                       ),
-                    );
-                  },
-                ),
-    );
-  }
-}
-
-class OrderDetailPage extends StatelessWidget {
-  final OrderModel order;
-  final VoidCallback onAccept;
-  final VoidCallback onReject;
-  final VoidCallback onComplete;
-
-  const OrderDetailPage({
-    required this.order,
-    required this.onAccept,
-    required this.onReject,
-    required this.onComplete,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    // decide which buttons to show
-    List<Widget> actions = [];
-    if (order.status == 'pending') {
-      actions = [
-        ElevatedButton(onPressed: onAccept, child: Text('Принять')),
-        ElevatedButton(
-          onPressed: onReject,
-          child: Text('Отклонить'),
-          style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-        ),
-      ];
-    } else if (order.status == 'in_progress') {
-      actions = [
-        ElevatedButton(onPressed: onComplete, child: Text('Завершить')),
-      ];
-    }
-
-    return Scaffold(
-      appBar: AppBar(title: Text('Заказ №${order.id}')),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: ListView(
-          children: [
-            Text('Услуга: ${order.serviceType}', style: TextStyle(fontWeight: FontWeight.bold)),
-            const SizedBox(height: 8),
-            Text('Описание: ${order.description}'),
-            const SizedBox(height: 8),
-            Text('Статус: ${order.status}'),
-            const SizedBox(height: 8),
-            Text('Дата: ${order.scheduledFor.toLocal().toString().split(".")[0]}'),
-            const SizedBox(height: 16),
-            Text('Дети:', style: TextStyle(fontWeight: FontWeight.bold)),
-            ...order.children.map((child) => ListTile(
-                  leading: CircleAvatar(
-                    backgroundImage: NetworkImage(
-                      child.pfpUrl ?? 'https://via.placeholder.com/50',
+                    ],
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        if (o.status == 'pending') ...[
+                          TextButton(
+                            onPressed: () =>
+                                _updateOrderStatus(o.id!, 'accepted'),
+                            child: Text('accept'.tr()),
+                          ),
+                          TextButton(
+                            onPressed: () =>
+                                _updateOrderStatus(o.id!, 'cancelled'),
+                            child: Text('reject'.tr()),
+                          ),
+                        ] else if (o.status == 'in_progress')
+                          TextButton(
+                            onPressed: () =>
+                                _updateOrderStatus(o.id!, 'completed'),
+                            child: Text('complete'.tr()),
+                          ),
+                      ],
                     ),
-                  ),
-                  title: Text(child.name),
-                  subtitle: Text('Дата рождения: ${child.dateOfBirth.toLocal().toString().split(" ")[0]}'),
-                )),
-            const SizedBox(height: 24),
-            if (actions.isNotEmpty)
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: actions,
+                  ],
+                ),
               ),
-          ],
-        ),
-      ),
+            ],
+          ),
+        );
+      },
     );
   }
 }

@@ -1,5 +1,7 @@
+//front_client\lib\screens\common\page_settings.dart
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:easy_localization/easy_localization.dart';
 import '../../auth/login.dart';
 
 class SettingsPage extends StatefulWidget {
@@ -11,7 +13,6 @@ class _SettingsPageState extends State<SettingsPage> {
   bool notificationsEnabled = true;
   bool emailNotifications = true;
   bool smsNotifications = false;
-  bool applySubsidies = true;
   ThemeMode currentTheme = ThemeMode.system;
 
   void _logout() async {
@@ -29,141 +30,75 @@ class _SettingsPageState extends State<SettingsPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Настройки'),
+        title: Text('settings'.tr()),
       ),
       body: ListView(
         children: [
           SettingsSection(
-            title: 'Уведомления',
+            title: 'notifications'.tr(),
             children: [
               SwitchListTile(
-                title: Text('Включить уведомления'),
-                subtitle: Text('Общие push-уведомления'),
+                title: Text('enable_notifications'.tr()),
+                subtitle: Text('push_notifications'.tr()),
                 value: notificationsEnabled,
-                onChanged: (bool value) {
-                  setState(() {
-                    notificationsEnabled = value;
-                  });
-                },
+                onChanged: (value) => setState(() => notificationsEnabled = value),
               ),
               SwitchListTile(
-                title: Text('Email уведомления'),
-                subtitle: Text('Получать уведомления на email'),
+                title: Text('email_notifications'.tr()),
+                subtitle: Text('receive_email_notifications'.tr()),
                 value: emailNotifications,
                 onChanged: notificationsEnabled
-                    ? (bool value) {
-                        setState(() {
-                          emailNotifications = value;
-                        });
-                      }
+                    ? (value) => setState(() => emailNotifications = value)
                     : null,
               ),
               SwitchListTile(
-                title: Text('SMS уведомления'),
-                subtitle: Text('Получать уведомления по SMS'),
+                title: Text('sms_notifications'.tr()),
+                subtitle: Text('receive_sms_notifications'.tr()),
                 value: smsNotifications,
                 onChanged: notificationsEnabled
-                    ? (bool value) {
-                        setState(() {
-                          smsNotifications = value;
-                        });
-                      }
+                    ? (value) => setState(() => smsNotifications = value)
                     : null,
               ),
             ],
           ),
           SettingsSection(
-            title: 'Оплата',
-            children: [
-              SwitchListTile(
-                title: Text('Применять субсидии'),
-                subtitle: Text('Автоматически применять доступные государственные субсидии'),
-                value: applySubsidies,
-                onChanged: (bool value) {
-                  setState(() {
-                    applySubsidies = value;
-                  });
-                },
-              ),
-              ListTile(
-                title: Text('Способы оплаты'),
-                trailing: Icon(Icons.chevron_right),
-                onTap: () {
-                  // Навигация к странице способов оплаты
-                },
-              ),
-            ],
-          ),
-          SettingsSection(
-            title: 'Безопасность',
+            title: 'application'.tr(),
             children: [
               ListTile(
-                title: Text('Изменить пароль'),
-                trailing: Icon(Icons.chevron_right),
-                onTap: () {
-                  // Навигация к странице изменения пароля
-                },
-              ),
-              ListTile(
-                title: Text('Двухфакторная аутентификация'),
-                trailing: Icon(Icons.chevron_right),
-                onTap: () {
-                  // Навигация к настройкам 2FA
-                },
-              ),
-            ],
-          ),
-          SettingsSection(
-            title: 'Приложение',
-            children: [
-              ListTile(
-                title: Text('Тема'),
+                title: Text('theme'.tr()),
                 trailing: DropdownButton<ThemeMode>(
                   value: currentTheme,
-                  onChanged: (ThemeMode? newValue) {
-                    if (newValue != null) {
-                      setState(() {
-                        currentTheme = newValue;
-                      });
-                    }
+                  onChanged: (newValue) {
+                    if (newValue != null) setState(() => currentTheme = newValue);
                   },
                   items: [
                     DropdownMenuItem(
                       value: ThemeMode.system,
-                      child: Text('Системная'),
+                      child: Text('system'.tr()),
                     ),
                     DropdownMenuItem(
                       value: ThemeMode.light,
-                      child: Text('Светлая'),
+                      child: Text('light'.tr()),
                     ),
-                    DropdownMenuItem(
-                      value: ThemeMode.dark,
-                      child: Text('Темная'),
-                    ),
+                    // DropdownMenuItem(
+                    //   value: ThemeMode.dark,
+                    //   child: Text('dark'.tr()),
+                    // ),
                   ],
                 ),
               ),
               ListTile(
-                title: Text('Язык'),
-                trailing: Text('Русский'),
-                onTap: () {
-                  // Навигация к выбору языка
-                },
-              ),
-              ListTile(
-                title: Text('О приложении'),
+                title: Text('about_app'.tr()),
                 trailing: Icon(Icons.chevron_right),
-                onTap: () {
-                  // Показать информацию о приложении
-                },
+                onTap: () { /* show about dialog */ },
               ),
             ],
           ),
           SettingsSection(
-            title: 'Аккаунт',
+            title: 'account'.tr(),
             children: [
               ListTile(
-                title: Text('Выйти'),
+                title: Text('logout'.tr()),
                 leading: Icon(Icons.logout, color: Colors.red),
                 titleTextStyle: TextStyle(color: Colors.red, fontSize: 16),
                 onTap: _logout,
@@ -201,9 +136,7 @@ class SettingsSection extends StatelessWidget {
         ),
         Material(
           color: Colors.white,
-          child: Column(
-            children: children,
-          ),
+          child: Column(children: children),
         ),
         Divider(height: 1),
       ],

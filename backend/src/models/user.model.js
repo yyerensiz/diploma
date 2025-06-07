@@ -1,13 +1,13 @@
 // backend/models/user.model.js
-const { DataTypes } = require('sequelize');
-const { db } = require('../config/database.config');
+const {DataTypes} = require('sequelize');
+const {db} = require('../config/database.config');
 
 const User = db.define('user', {
-  user_id: { // Changed to user_id to match the database
+  user_id: {
     type: DataTypes.INTEGER,
     autoIncrement: true,
     primaryKey: true,
-    field: 'id' // Explicitly map to the database column name
+    field: 'id'
   },
   firebase_uid: {
     type: DataTypes.STRING,
@@ -22,22 +22,22 @@ const User = db.define('user', {
   address: {
     type: DataTypes.STRING,
     allowNull: true,
-    field: 'address' // Explicitly map to the database column name
+    field: 'address'
   },
   role: {
     type: DataTypes.ENUM('client', 'specialist', 'admin'),
     allowNull: false,
   },
-  full_name: { // Changed to full_name to match the database
+  full_name: {
     type: DataTypes.STRING,
     allowNull: true,
   },
-  phone: { // Changed to phone to match the database
+  phone: {
     type: DataTypes.STRING,
     allowNull: true,
-    field: 'phone' // Explicitly map to the database column name
+    field: 'phone'
   },
-  pfp_url: { // Added pfp_url to match the database
+  pfp_url: {
     type: DataTypes.STRING,
     allowNull: true,
     field: 'pfp_url'
@@ -46,12 +46,11 @@ const User = db.define('user', {
     type: DataTypes.STRING,
     allowNull: true,
   },
-  //  Removed first_name and last_name
 }, {
   tableName: 'users',
   timestamps: true,
-  createdAt: 'created_at', //explicitly define the column name if it is different
-  updatedAt: false, //set to false, if you do not have this column in table
+  createdAt: 'created_at', 
+  updatedAt: false,
 });
 
-module.exports = { User };
+module.exports = {User};

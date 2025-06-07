@@ -1,7 +1,5 @@
-// shared_package/lib/shared_package.dart (or shared.dart)
-
-library shared_carenest; //  Optional:  Give your library a name
-//export 'models/user.dart';
+//shared_package\lib\shared_package.dart
+library shared_carenest;
 export 'widgets/custom_button.dart';
 export 'auth/auth_wrapper.dart';
 export 'auth/login.dart';

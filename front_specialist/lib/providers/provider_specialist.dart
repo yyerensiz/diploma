@@ -1,10 +1,11 @@
+//front_specialist\lib\providers\provider_specialist.dart
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../models/model_specialist.dart';
 import '../services/service_specialist.dart';
 
 class SpecialistProvider extends ChangeNotifier {
-  SpecialistProfile? profile;
+  Specialist? profile;
   bool isLoading = false;
   String? lastError;
 
@@ -27,7 +28,7 @@ class SpecialistProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> updateProfile(SpecialistProfile updated) async {
+  Future<void> updateProfile(Specialist updated) async {
     await SpecialistService.updateProfile(updated);
     await loadProfile();
   }

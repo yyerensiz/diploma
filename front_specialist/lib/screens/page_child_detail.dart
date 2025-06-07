@@ -1,13 +1,15 @@
-// lib/screens/page_child_detail.dart
+//front_specialist\lib\screens\page_child_detail.dart
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import '../models/model_child.dart';
 
 class ChildDetailPage extends StatelessWidget {
   final Child child;
-  const ChildDetailPage({ required this.child });
+  const ChildDetailPage({Key? key, required this.child}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
+    final dob = child.dateOfBirth.toLocal().toString().split(' ')[0];
     return Scaffold(
       appBar: AppBar(title: Text(child.name)),
       body: Center(
@@ -25,20 +27,20 @@ class ChildDetailPage extends StatelessWidget {
               ),
               const SizedBox(height: 16),
               Text(
-                'Имя: ${child.name}',
+                'child_name'.tr(args: [child.name]),
                 style: const TextStyle(fontSize: 18),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 8),
               Text(
-                'Дата рождения: ${child.dateOfBirth.toLocal().toString().split(" ")[0]}',
+                'child_dob'.tr(args: [dob]),
                 textAlign: TextAlign.center,
               ),
               if (child.bio != null && child.bio!.isNotEmpty) ...[
                 const SizedBox(height: 16),
-                const Text(
-                  'Биография:',
-                  style: TextStyle(fontWeight: FontWeight.bold),
+                Text(
+                  'child_bio'.tr(),
+                  style: const TextStyle(fontWeight: FontWeight.bold),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 4),

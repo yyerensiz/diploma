@@ -1,30 +1,32 @@
-// lib/models/model_specialist.dart
-class SpecialistProfile {
+//front_specialist\lib\models\model_specialist.dart
+class Specialist {
   final int id;
-  final String? bio;
-  final double? hourlyRate;
-  final double? rating;
-  final String? availableTimes;
-  final bool? verified;
-  final String? fullName;
+  final String fullName;
   final String? email;
   final String? phone;
   final String? pfpUrl;
 
-  SpecialistProfile({
+  final double rating;
+  final String? bio;
+  final double? hourlyRate;
+  final String? availableTimes;
+  final bool? verified;
+
+  Specialist({
     required this.id,
-    this.bio,
-    this.hourlyRate,
-    this.rating,
-    this.availableTimes,
-    this.verified,
-    this.fullName,
+    required this.fullName,
+    required this.rating,
     this.email,
     this.phone,
     this.pfpUrl,
+
+    this.bio,
+    this.hourlyRate,
+    this.availableTimes,
+    this.verified,
   });
 
-  factory SpecialistProfile.fromJson(Map<String, dynamic> json) {
+  factory Specialist.fromJson(Map<String, dynamic> json) {
     // Parse hourly_rate whether it's a number or a string
     double? parseDouble(dynamic val) {
       if (val == null) return null;
@@ -32,17 +34,18 @@ class SpecialistProfile {
       return double.tryParse(val.toString());
     }
 
-    return SpecialistProfile(
+    return Specialist(
       id: json['id'] as int,
-      bio: json['bio'] as String?,
-      hourlyRate: parseDouble(json['hourly_rate']),
-      rating: parseDouble(json['rating']),
-      availableTimes: json['available_times'] as String?,
-      verified: json['verified'] == true,
-      fullName: json['full_name'] as String?,
+      fullName: json['full_name'] as String,
       email: json['email'] as String?,
       phone: json['phone'] as String?,
       pfpUrl: json['pfp_url'] as String?,
+      
+      rating: (json['rating'] ?? 0).toDouble(),
+      bio: json['bio'] as String?,
+      hourlyRate: parseDouble(json['hourly_rate']),
+      availableTimes: json['available_times'] as String?,
+      verified: json['verified'] == true,
     );
   }
 
@@ -57,5 +60,5 @@ class SpecialistProfile {
         'email': email,
         'phone': phone,
         'pfp_url': pfpUrl,
-      };
+  };
 }

@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  />
+  <title>Admin Panel — Register</title>
+  <link rel="stylesheet" href="../css/style.css" />
+</head>
+<body>
+  <div class="container" id="register-container">
+    <h1>Register New Admin</h1>
+    <form id="register-form">
+      <input
+        type="email"
+        id="email"
+        placeholder="Email"
+        required
+      />
+      <input
+        type="password"
+        id="password"
+        placeholder="Password"
+        minlength="6"
+        required
+      />
+      <input
+        type="text"
+        id="full_name"
+        placeholder="Full Name"
+        required
+      />
+      <input
+        type="tel"
+        id="phone"
+        placeholder="Phone (e.g. +77001234567)"
+        required
+      />
+      <button type="submit">Register as Admin</button>
+    </form>
+    <p id="register-error" style="margin-top: 12px; color: #dc3545;"></p>
+    <p style="margin-top: 20px;">
+      Already have an account? <a href="login.html">Log in here</a>.
+    </p>
+  </div>
+
+  <script src="../js/register.js"></script>
+</body>
+</html>

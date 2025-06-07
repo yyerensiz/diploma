@@ -1,4 +1,4 @@
-// Specialist Card Widget
+//front_client\lib\widgets\specialist_card.dart
 import 'package:flutter/material.dart';
 
 class SpecialistCard extends StatelessWidget {

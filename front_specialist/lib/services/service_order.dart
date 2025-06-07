@@ -1,12 +1,14 @@
+//front_specialist\lib\services\service_order.dart
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:shared_carenest/config.dart';
 import '../models/model_order.dart';
 
 class OrderService {
-  final String baseUrl = 'http://192.168.0.230:5000/api/orders';
+  final String baseUrl = URL_ORDERS_BASE;
 
-  Future<List<OrderModel>> fetchSpecialistOrders(int specialistId) async {
+  Future<List<Order>> fetchSpecialistOrders(int specialistId) async {
   final user = FirebaseAuth.instance.currentUser;
   if (user == null) throw Exception('User not logged in');
   final token = await user.getIdToken();
@@ -22,7 +24,6 @@ class OrderService {
     throw Exception('Failed to load orders: ${response.body}');
   }
 
-  // grab the array under "orders"
   final List<dynamic> data = jsonDecode(response.body)['orders'];
 
   if (data.isNotEmpty) {
@@ -30,7 +31,7 @@ class OrderService {
   }
 
   return data
-      .map((j) => OrderModel.fromJson(j as Map<String, dynamic>))
+      .map((j) => Order.fromJson(j as Map<String, dynamic>))
       .toList();
 }
 
@@ -41,7 +42,7 @@ class OrderService {
     final token = await user.getIdToken();
 
     final response = await http.put(
-      Uri.parse('$baseUrl/$orderId'),
+      Uri.parse('$URL_UPDATE_ORDER/$orderId'),
       headers: {'Authorization': 'Bearer $token', 'Content-Type': 'application/json'},
       body: jsonEncode({'status': status}),
     );

@@ -1,7 +1,7 @@
 // backend/models/child.model.js
-const { DataTypes } = require('sequelize');
-const { db } = require('../config/database.config');
-const { User } = require('./user.model');
+const {DataTypes} = require('sequelize');
+const {db} = require('../config/database.config');
+const {User} = require('./user.model');
 
 const Child = db.define('child', {
   id: {
@@ -10,7 +10,7 @@ const Child = db.define('child', {
     autoIncrement: true,
   },
   client_id: {
-    type: DataTypes.UUID, // Changed to INTEGER
+    type: DataTypes.UUID,
     allowNull: false,
     references: {
       model: 'users',
@@ -26,7 +26,7 @@ const Child = db.define('child', {
     allowNull: false,
   },
   bio: {
-    type: DataTypes.TEXT, // or STRING if you prefer short bios
+    type: DataTypes.TEXT,
     allowNull: true,
   },
   pfp_url: {
@@ -43,4 +43,4 @@ Child.belongsTo(User, {
   as: 'client',
 });
 
-module.exports = { Child };
+module.exports = {Child};
